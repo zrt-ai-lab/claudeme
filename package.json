@@ -1,6 +1,6 @@
 {
   "name": "claudeme",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "基于 Claude Code，极简、不闹心的终端 AI 编程助手",
   "license": "SEE LICENSE IN LICENSE.md",

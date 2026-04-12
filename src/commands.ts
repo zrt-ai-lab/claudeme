@@ -27,6 +27,7 @@ import initVerifiers from './commands/init-verifiers.js'
 import keybindings from './commands/keybindings/index.js'
 import login from './commands/login/index.js'
 import logout from './commands/logout/index.js'
+import wiki from './commands/wiki/index.js'
 import installGitHubApp from './commands/install-github-app/index.js'
 import installSlackApp from './commands/install-slack-app/index.js'
 import breakCache from './commands/break-cache/index.js'
@@ -288,6 +289,7 @@ const COMMANDS = memoize((): Command[] => [
   memory,
   mobile,
   model,
+  wiki,
   outputStyle,
   remoteEnv,
   plugin,

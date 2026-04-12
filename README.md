@@ -37,9 +37,108 @@ Claude Code 很强，但：
 | ⏵⏵ 零确认模式 | 默认 Bypass Permissions，无需 `--dangerously-skip-permissions`，告别反复弹窗 |
 | 🛠️ 完整工具链 | 文件读写、Bash 执行、代码搜索、Web 搜索、MCP 服务器… |
 | 🧠 Agent 能力 | 多 Agent 并行、子任务编排、Plan 模式、自动化工作流 |
+| 📚 Wiki 知识库 | 个人知识体系自动构建——导入、查询、扫描、健康检查，知识长在终端里 |
 | 📦 Skills 生态 | 内置丰富 Skills，支持自定义扩展 |
 | 🎨 中文 UI | Spinner、Tips、提示信息全面中文化 |
 | ⚡ 极速体验 | Bun 运行时，启动快、响应快 |
+
+## Wiki 知识库 (v1.0.2 新增)
+
+ClaudeMe 内置了一套**个人知识库系统**，将你的技术文档、笔记、文章自动转化为结构化的 Wiki 知识网络。不是简单的文件索引——它通过 LLM 提取实体、主题、关系，构建你自己的知识图谱。
+
+### 核心能力
+
+| 功能 | 说明 |
+|------|------|
+| 📂 **自动扫描** | 配置知识源目录，`/wiki scan` 自动发现并导入新增文件 |
+| 🧠 **智能提取** | LLM 自动提取实体（人物、技术、工具）和主题（方向、趋势） |
+| 🔗 **双向链接** | Wiki 页面间自动建立 `[[双向链接]]`，形成知识网络 |
+| 🔍 **知识查询** | 两阶段 RAG：LLM 选页 → 读取 → 综合回答 |
+| 🩺 **健康检查** | 自动检测断链、孤页、索引不一致 |
+| ⚡ **后台并发** | 15 路并发处理，批次上限 100，不阻塞对话 |
+| 🔧 **专属模型** | Wiki 可配独立模型，用便宜模型跑知识提取，省钱 |
+| 🛡️ **SHA256 去重** | 文件内容哈希去重，不会重复导入 |
+
+### 命令一览
+
+```
+/wiki scan                   — 后台扫描知识源目录（每批 100 个）
+/wiki stop                   — 停止正在进行的扫描
+/wiki status                 — 查看知识库状态和扫描进度
+/wiki ingest <url|文件路径>  — 手动导入单个素材
+/wiki query <问题>           — 查询知识库
+/wiki lint                   — 检查知识库健康度
+```
+
+### 配置
+
+在 `claudeme.json` 中添加 wiki 配置：
+
+```json
+{
+  "wiki": {
+    "sources": ["/path/to/your/knowledge-base"],
+    "model": "provider/model-key"
+  }
+}
+```
+
+- **sources** — 知识源目录列表，支持多个目录，自动递归扫描 `.md` / `.txt` 文件
+- **model** (可选) — Wiki 专属模型，不配则跟随当前对话模型。建议配一个便宜的模型专门跑知识提取
+
+智能过滤：自动跳过 `node_modules`、`.git`、`.venv`、`dist`、`build` 等目录，跳过 `README.md`、`CHANGELOG.md` 等通用文件，跳过小于 50 字节的空模板。
+
+### 知识库结构
+
+Wiki 知识库存储在 `~/.claude/wiki/`，结构如下：
+
+```
+~/.claude/wiki/
+├── index.md              — 知识索引（实体/主题/素材摘要列表）
+├── log.md                — 操作日志
+├── raw/articles/         — 原始素材备份（带 SHA256 哈希命名）
+└── pages/
+    ├── entities/         — 实体页（人物、工具、技术概念…）
+    ├── topics/           — 主题页（技术方向、趋势…）
+    ├── sources/          — 素材摘要页
+    └── synthesis/        — 综合分析页
+```
+
+### 工作流程
+
+```
+                ┌──────────────────┐
+你的文档目录 ──→│  /wiki scan      │──→ 发现新文件
+                └────────┬─────────┘
+                         ↓
+                ┌──────────────────┐
+  SHA256 去重 ──│  已处理？跳过     │
+                └────────┬─────────┘
+                         ↓ 新文件
+                ┌──────────────────┐
+   LLM 提取  ──│  实体 + 主题      │──→ 15 路并发
+                └────────┬─────────┘
+                         ↓
+                ┌──────────────────┐
+   写入 Wiki ──│  创建/合并页面    │──→ [[双向链接]]
+                └────────┬─────────┘
+                         ↓
+                ┌──────────────────┐
+   更新索引  ──│  index.md + log   │
+                └──────────────────┘
+```
+
+### 查询流程
+
+```
+/wiki query "多智能体协作模式"
+         ↓
+  Stage 1: LLM 从索引中选出 ≤5 个相关页面
+         ↓
+  Stage 2: 读取页面内容，LLM 综合回答
+         ↓
+  返回答案 + 引用页面列表
+```
 
 ## 快速开始
 
@@ -104,6 +203,10 @@ cp claudeme.example.json claudeme.json
         }
       }
     }
+  },
+  "wiki": {
+    "sources": ["/path/to/your/kbase"],
+    "model": "my-provider/sonnet"
   }
 }
 ```
@@ -138,13 +241,56 @@ ClaudeMe 和原版 Claude Code 共享 `~/.claude/` 配置目录（包括 `settin
 - **原版 Claude Code** 需要手动传 `--dangerously-skip-permissions` 才能跳过确认
 - **ClaudeMe** 默认就是 Bypass Permissions，无需任何 flag
 
+## 版本历史
+
+### v1.0.2 — Wiki 知识库
+
+- **Wiki 知识库系统** — 个人知识体系自动构建（`src/wiki/` 全新模块，15 个文件）
+  - `/wiki scan` 后台扫描知识源目录，15 路并发，每批 100 个文件，不阻塞对话
+  - `/wiki stop` 随时停止正在进行的扫描
+  - `/wiki ingest` 手动导入单个文件或 URL（支持 HTML 自动转 Markdown）
+  - `/wiki query` 两阶段 RAG 知识查询（LLM 选页 → 综合回答）
+  - `/wiki lint` 知识库健康检查（断链、孤页、索引一致性、过期检测）
+  - `/wiki status` 知识库状态总览（含实时扫描进度）
+- **Wiki 专属模型配置** — `claudeme.json` 的 `wiki.model` 字段，可独立配置便宜模型跑知识提取
+- **系统提示注入** — 知识库索引自动注入系统提示，模型感知你的知识体系
+- **智能文件过滤** — 自动排除 node_modules、.git、.venv、dist、build 等无关目录
+- **SHA256 去重** — 内容哈希去重，不重复导入同一文件
+- **LLM 自动重试** — 429/500/502/503/504 自动指数退避重试（最多 2 次）
+- **LLM 桥接层** — 直接 fetch OpenAI 兼容接口，读 ClaudeMe 配置，不耦合 Anthropic SDK
+- **`[[双向链接]]`** — Wiki 页面间自动建立双向链接，形成知识网络
+
+### v1.0.1 — 零确认模式 + 厂商分组配置
+
+- **默认 Bypass Permissions** — 启动即全自动，无需 `--dangerously-skip-permissions`
+  - `permissionSetup.ts`：默认 fallback 改为 bypassPermissions
+  - 禁用 Statsig gate 和 settings 干扰，`isBypassPermissionsModeAvailable` 恒 true
+  - 跳过首次 bypass 确认弹窗
+  - 禁用远程 kill-switch
+  - 移除 root/sudo 和 sandbox 环境检查
+- **按厂商分组配置模型** — `claudeme.json` 从扁平 models 重构为 providers 分组格式
+  - 每个厂商只需配置一次 `api_base` / `api_key`，模型自动继承
+  - 模型使用 `provider/model` 复合 key 引用（如 `zyuncs/copilotcode-14`）
+  - `/model` 命令按厂商分组展示，分隔线 + 分组标题
+  - 新增 `getProviders()` / `getModelsByProvider()` 公共 API
+
+### v1.0.0 — 首个稳定版
+
+- **解绑 Anthropic SDK** — 接入任意 OpenAI Compatible API
+- **OpenAI 适配器** — 将 Claude Code 内部的 Anthropic 调用转发到 OpenAI 兼容接口
+- **claudeme.json 配置** — 一个文件搞定 API 接入
+- **中文 UI** — Spinner 动词、Tips、提示信息全面中文化
+- **完整工具链继承** — 文件读写、Bash 执行、代码搜索、Web 搜索、MCP 服务器
+- **Agent 能力继承** — 多 Agent 并行、子任务编排、Plan 模式
+- **Bun 运行时** — 启动快、响应快
+
 ## 项目状态
 
-🚀 **v1.0.1** —— 持续迭代中
+🚀 **v1.0.2** —— 持续迭代中
 
-**当前阶段**：极致的 AI 编程终端——多厂商多模型、零确认、中文原生。
+**当前阶段**：极致的 AI 编程终端 + 个人知识库——多厂商多模型、零确认、中文原生、知识长在终端里。
 
-**下一步**：个性化记忆、偏好学习、自主工作流——让 ClaudeMe 越来越像你。
+**下一步**：向量检索、自动触发扫描、模型主动查询知识库、个性化记忆——让 ClaudeMe 越来越像你。
 
 目标是让每个开发者都拥有一个住在终端里的数字分身，不受网络限制、不受平台绑定、不受打断。
 
