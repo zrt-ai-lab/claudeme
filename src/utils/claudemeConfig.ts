@@ -1,7 +1,8 @@
 /**
  * ClaudeMe 多模型配置管理
  *
- * 读取项目根目录 claudeme.json，提供模型列表、当前模型配置等功能。
+ * 读取项目根目录 claudeme.json，按厂商(provider)分组管理模型。
+ * 每个厂商配置一次 api_base/api_key，其下模型自动继承。
  * 支持 OpenAI Compatible API 和原 Anthropic API 混配。
  */
 
@@ -16,6 +17,32 @@ export interface ModelCapabilities {
   readonly tool_calling: boolean
 }
 
+/** 厂商下的模型条目 */
+export interface ProviderModelEntry {
+  readonly name: string
+  readonly model: string
+  readonly max_tokens: number
+  readonly capabilities: ModelCapabilities
+  readonly api_base?: string // 可选覆盖厂商默认
+  readonly api_key?: string // 可选覆盖厂商默认
+  readonly provider?: 'anthropic' | 'openai-compat'
+}
+
+/** 厂商配置 */
+export interface ProviderConfig {
+  readonly name: string
+  readonly api_base: string
+  readonly api_key: string // 支持 $ENV_VAR
+  readonly models: Readonly<Record<string, ProviderModelEntry>>
+}
+
+/** JSON 文件结构 */
+export interface ClaudemeConfigFile {
+  readonly default: string
+  readonly providers: Readonly<Record<string, ProviderConfig>>
+}
+
+/** 展开后的单模型配置（内部使用，下游消费） */
 export interface ModelConfig {
   readonly name: string
   readonly api_base?: string
@@ -24,11 +51,15 @@ export interface ModelConfig {
   readonly max_tokens: number
   readonly provider?: 'anthropic' | 'openai-compat'
   readonly capabilities: ModelCapabilities
+  readonly providerKey: string // 如 "zyuncs"
+  readonly providerName: string // 如 "智汇云市场"
 }
 
+/** 内部运行时配置 */
 export interface ClaudemeConfig {
   readonly default: string
   readonly models: Readonly<Record<string, ModelConfig>>
+  readonly providers: Readonly<Record<string, { name: string }>>
 }
 
 // ─── 模块状态（惰性加载，不可变） ───
@@ -56,9 +87,7 @@ function resolveApiKey(raw: string | undefined): string | undefined {
  */
 function findConfigPath(): string | null {
   // 优先从项目根（process.cwd()）查找
-  const candidates = [
-    join(process.cwd(), 'claudeme.json'),
-  ]
+  const candidates = [join(process.cwd(), 'claudeme.json')]
 
   // 如果 CLAUDEME_CONFIG 环境变量指定了路径，优先用
   if (process.env.CLAUDEME_CONFIG) {
@@ -77,6 +106,58 @@ function findConfigPath(): string | null {
 }
 
 /**
+ * 将 providers 格式展开为 Record<compositeKey, ModelConfig>
+ */
+function normalizeProviders(
+  providers: Record<string, ProviderConfig>,
+): { models: Record<string, ModelConfig>; providerMeta: Record<string, { name: string }> } {
+  const models: Record<string, ModelConfig> = {}
+  const providerMeta: Record<string, { name: string }> = {}
+
+  for (const [providerKey, providerCfg] of Object.entries(providers)) {
+    // provider key 不能含 /
+    if (providerKey.includes('/')) {
+      logError(new Error(`claudeme.json: provider key "${providerKey}" must not contain '/'`))
+      continue
+    }
+
+    providerMeta[providerKey] = { name: providerCfg.name }
+    const providerApiBase = providerCfg.api_base
+    const providerApiKey = resolveApiKey(providerCfg.api_key)
+
+    for (const [modelKey, entry] of Object.entries(providerCfg.models)) {
+      // model key 不能含 /
+      if (modelKey.includes('/')) {
+        logError(
+          new Error(`claudeme.json: model key "${modelKey}" in "${providerKey}" must not contain '/'`),
+        )
+        continue
+      }
+
+      const compositeKey = `${providerKey}/${modelKey}`
+
+      // 模型级覆盖优先于厂商级
+      const effectiveApiBase = entry.api_base ?? providerApiBase
+      const effectiveApiKey = entry.api_key ? resolveApiKey(entry.api_key) : providerApiKey
+
+      models[compositeKey] = {
+        name: entry.name,
+        api_base: effectiveApiBase,
+        api_key: effectiveApiKey,
+        model: entry.model,
+        max_tokens: entry.max_tokens,
+        provider: entry.provider ?? (effectiveApiBase ? 'openai-compat' : 'anthropic'),
+        capabilities: entry.capabilities,
+        providerKey,
+        providerName: providerCfg.name,
+      }
+    }
+  }
+
+  return { models, providerMeta }
+}
+
+/**
  * 加载并解析 claudeme.json
  */
 function loadConfig(): ClaudemeConfig | null {
@@ -91,36 +172,28 @@ function loadConfig(): ClaudemeConfig | null {
 
   try {
     const raw = readFileSync(configPath, 'utf8')
-    const parsed = JSON.parse(raw) as ClaudemeConfig
+    const parsed = JSON.parse(raw)
 
     // 校验基本结构
-    if (!parsed.default || !parsed.models || typeof parsed.models !== 'object') {
-      logError(new Error('claudeme.json: missing "default" or "models" field'))
+    if (!parsed.default || !parsed.providers || typeof parsed.providers !== 'object') {
+      logError(new Error('claudeme.json: missing "default" or "providers" field'))
       return null
     }
 
-    if (!parsed.models[parsed.default]) {
+    const { models, providerMeta } = normalizeProviders(parsed.providers)
+
+    // 校验 default 指向有效模型
+    if (!models[parsed.default]) {
       logError(
-        new Error(
-          `claudeme.json: default model "${parsed.default}" not found in models`,
-        ),
+        new Error(`claudeme.json: default model "${parsed.default}" not found in providers`),
       )
       return null
     }
 
-    // 解析每个模型的 api_key，推断 provider
-    const resolvedModels: Record<string, ModelConfig> = {}
-    for (const [key, model] of Object.entries(parsed.models)) {
-      resolvedModels[key] = {
-        ...model,
-        api_key: resolveApiKey(model.api_key),
-        provider: model.provider ?? (model.api_base ? 'openai-compat' : 'anthropic'),
-      }
-    }
-
     _config = {
       default: parsed.default,
-      models: resolvedModels,
+      models,
+      providers: providerMeta,
     }
 
     return _config
@@ -230,6 +303,26 @@ export function isOpenAICompatModel(key?: string): boolean {
   const config = getModelConfigByKey(modelKey)
   if (!config) return false
   return config.provider === 'openai-compat'
+}
+
+/**
+ * 获取所有厂商信息
+ */
+export function getProviders(): Readonly<Record<string, { name: string }>> {
+  const config = loadConfig()
+  if (!config) return {}
+  return config.providers
+}
+
+/**
+ * 获取指定厂商下的模型列表
+ */
+export function getModelsByProvider(providerKey: string): Array<{ key: string } & ModelConfig> {
+  const config = loadConfig()
+  if (!config) return []
+  return Object.entries(config.models)
+    .filter(([, model]) => model.providerKey === providerKey)
+    .map(([key, model]) => ({ key, ...model }))
 }
 
 /**

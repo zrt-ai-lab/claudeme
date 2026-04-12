@@ -84,15 +84,29 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
         return state
       }
 
-      // Wrap to first item if at the end
-      const next = item.next || state.optionMap.first
+      // Find next non-disabled item, wrapping around if needed
+      let next = item.next || state.optionMap.first
+      let attempts = 0
+      const maxAttempts = state.optionMap.size
+      while (next && next.disabled && attempts < maxAttempts) {
+        next = next.next || state.optionMap.first
+        attempts++
+      }
 
-      if (!next) {
+      if (!next || next.disabled) {
         return state
       }
 
-      // When wrapping to first, reset viewport to start
-      if (!item.next && next === state.optionMap.first) {
+      // When wrapping to first or beyond, reset viewport to appropriate position
+      if (!item.next || next.index <= item.index) {
+        // We've wrapped around
+        const needsToScroll = next.index >= state.visibleToIndex || next.index < state.visibleFromIndex
+        if (!needsToScroll) {
+          return {
+            ...state,
+            focusedValue: next.value,
+          }
+        }
         return {
           ...state,
           focusedValue: next.value,
@@ -112,10 +126,10 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
 
       const nextVisibleToIndex = Math.min(
         state.optionMap.size,
-        state.visibleToIndex + 1,
+        next.index + 1,
       )
 
-      const nextVisibleFromIndex = nextVisibleToIndex - state.visibleOptionCount
+      const nextVisibleFromIndex = Math.max(0, nextVisibleToIndex - state.visibleOptionCount)
 
       return {
         ...state,
@@ -136,15 +150,29 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
         return state
       }
 
-      // Wrap to last item if at the beginning
-      const previous = item.previous || state.optionMap.last
+      // Find previous non-disabled item, wrapping around if needed
+      let previous = item.previous || state.optionMap.last
+      let attempts = 0
+      const maxAttempts = state.optionMap.size
+      while (previous && previous.disabled && attempts < maxAttempts) {
+        previous = previous.previous || state.optionMap.last
+        attempts++
+      }
 
-      if (!previous) {
+      if (!previous || previous.disabled) {
         return state
       }
 
-      // When wrapping to last, reset viewport to end
-      if (!item.previous && previous === state.optionMap.last) {
+      // When wrapping to last or beyond, reset viewport to appropriate position
+      if (!item.previous || previous.index >= item.index) {
+        // We've wrapped around
+        const needsToScroll = previous.index < state.visibleFromIndex || previous.index >= state.visibleToIndex
+        if (!needsToScroll) {
+          return {
+            ...state,
+            focusedValue: previous.value,
+          }
+        }
         const nextVisibleToIndex = state.optionMap.size
         const nextVisibleFromIndex = Math.max(
           0,
@@ -158,7 +186,7 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
         }
       }
 
-      const needsToScroll = previous.index <= state.visibleFromIndex
+      const needsToScroll = previous.index < state.visibleFromIndex
 
       if (!needsToScroll) {
         return {
@@ -167,9 +195,12 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
         }
       }
 
-      const nextVisibleFromIndex = Math.max(0, state.visibleFromIndex - 1)
+      const nextVisibleFromIndex = Math.max(0, previous.index)
 
-      const nextVisibleToIndex = nextVisibleFromIndex + state.visibleOptionCount
+      const nextVisibleToIndex = Math.min(
+        state.optionMap.size,
+        nextVisibleFromIndex + state.visibleOptionCount,
+      )
 
       return {
         ...state,
@@ -438,7 +469,21 @@ const createDefaultState = <T>({
   const optionMap = new OptionMap<T>(options)
   const focusedItem =
     initialFocusValue !== undefined && optionMap.get(initialFocusValue)
-  const focusedValue = focusedItem ? initialFocusValue : optionMap.first?.value
+  let focusedValue = focusedItem ? initialFocusValue : optionMap.first?.value
+
+  // Skip disabled items for initial focus
+  if (focusedValue !== undefined) {
+    const focused = optionMap.get(focusedValue)
+    if (focused?.disabled) {
+      let candidate = focused.next
+      let attempts = 0
+      while (candidate && candidate.disabled && attempts < optionMap.size) {
+        candidate = candidate.next || optionMap.first
+        attempts++
+      }
+      focusedValue = candidate && !candidate.disabled ? candidate.value : undefined
+    }
+  }
 
   let visibleFromIndex = 0
   let visibleToIndex = visibleOptionCount

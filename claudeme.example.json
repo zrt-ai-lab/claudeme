@@ -1,26 +1,45 @@
 {
-  "default": "my-model",
-  "models": {
-    "my-model": {
-      "name": "我的模型",
+  "default": "zyuncs/my-model",
+  "providers": {
+    "zyuncs": {
+      "name": "智汇云市场",
       "api_base": "https://your-api-provider.com/v1",
       "api_key": "$CLAUDEME_API_KEY",
-      "model": "your-model-name",
-      "max_tokens": 32000,
-      "capabilities": {
-        "vision": true,
-        "tool_calling": true
+      "models": {
+        "my-model": {
+          "name": "我的模型",
+          "model": "your-model-name",
+          "max_tokens": 32000,
+          "capabilities": {
+            "vision": true,
+            "tool_calling": true
+          }
+        },
+        "my-fast-model": {
+          "name": "我的快速模型",
+          "model": "your-fast-model-name",
+          "max_tokens": 32000,
+          "capabilities": {
+            "vision": false,
+            "tool_calling": true
+          }
+        }
       }
     },
-    "my-fast-model": {
-      "name": "我的快速模型",
-      "api_base": "https://your-api-provider.com/v1",
-      "api_key": "$CLAUDEME_API_KEY",
-      "model": "your-fast-model-name",
-      "max_tokens": 32000,
-      "capabilities": {
-        "vision": false,
-        "tool_calling": true
+    "deepseek": {
+      "name": "DeepSeek",
+      "api_base": "https://api.deepseek.com/v1",
+      "api_key": "$DEEPSEEK_API_KEY",
+      "models": {
+        "v3": {
+          "name": "DeepSeek V3",
+          "model": "deepseek-chat",
+          "max_tokens": 32000,
+          "capabilities": {
+            "vision": false,
+            "tool_calling": true
+          }
+        }
       }
     }
   }

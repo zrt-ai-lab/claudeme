@@ -41,6 +41,7 @@ export type ModelOption = {
   label: string
   description: string
   descriptionForModel?: string
+  isSeparator?: boolean
 }
 
 export function getDefaultOptionForUser(fastMode = false): ModelOption {
@@ -549,36 +550,39 @@ function filterModelOptionsByAllowlist(options: ModelOption[]): ModelOption[] {
 // ─── ClaudeMe: 从 claudeme.json 生成模型选项列表 ───
 
 /**
- * 从 API base URL 提取域名用于显示
- */
-function extractDomain(apiBase: string | undefined): string {
-  if (!apiBase) return 'anthropic'
-  try {
-    return new URL(apiBase).hostname
-  } catch {
-    return apiBase
-  }
-}
-
-/**
  * 从 claudeme.json 生成 /model 选项列表
- * 完全替换原有的 Anthropic 硬编码模型
+ * 按厂商分组，插入分隔线
  */
 function getClaudemeModelOptions(): ModelOption[] {
-  const models = claudemeConfig.getModelList()
-  return models.map((m) => {
-    const domain = extractDomain(m.api_base)
-    const features: string[] = []
-    if (m.capabilities.vision) features.push('视觉')
-    if (m.capabilities.tool_calling) features.push('工具')
-    const featureStr = features.length > 0 ? ` · ${features.join('+')}` : ''
+  const providers = claudemeConfig.getProviders()
+  const result: ModelOption[] = []
 
-    return {
-      // 用模型的 key 作为 value（如 "deepseek-v3"），后续在 model.ts 中映射为实际 model 字符串
-      value: m.key,
-      label: m.name,
-      description: `${m.model} · ${domain}${featureStr}`,
-      descriptionForModel: `${m.name} (${m.model}) at ${domain}`,
+  for (const [providerKey, providerInfo] of Object.entries(providers)) {
+    const models = claudemeConfig.getModelsByProvider(providerKey)
+    if (models.length === 0) continue
+
+    // 插入厂商分隔线（disabled 项，箭头跳过）
+    result.push({
+      value: `__separator_${providerKey}__` as ModelSetting,
+      label: providerInfo.name,
+      description: '',
+      isSeparator: true,
+    })
+
+    for (const m of models) {
+      const features: string[] = []
+      if (m.capabilities.vision) features.push('视觉')
+      if (m.capabilities.tool_calling) features.push('工具')
+      const featureStr = features.length > 0 ? ` · ${features.join('+')}` : ''
+
+      result.push({
+        value: m.key,
+        label: m.name,
+        description: `${m.model}${featureStr}`,
+        descriptionForModel: `${m.name} (${m.model}) via ${providerInfo.name}`,
+      })
     }
-  })
+  }
+
+  return result
 }

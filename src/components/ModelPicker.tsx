@@ -387,6 +387,16 @@ export function ModelPicker(t0) {
 }
 function _temp4() {}
 function _temp3(opt_0) {
+  // ClaudeMe: 厂商分隔线渲染
+  if (opt_0.isSeparator) {
+    return {
+      ...opt_0,
+      value: opt_0.value,
+      label: `── ${opt_0.label} ──`,
+      description: '',
+      disabled: true,
+    };
+  }
   return {
     ...opt_0,
     value: opt_0.value === null ? NO_PREFERENCE : opt_0.value
