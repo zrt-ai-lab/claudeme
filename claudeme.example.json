@@ -42,5 +42,11 @@
         }
       }
     }
+  },
+  "wiki": {
+    "sources": [
+      "/path/to/your/knowledge-base"
+    ],
+    "model": "zyuncs/my-fast-model"
   }
 }
