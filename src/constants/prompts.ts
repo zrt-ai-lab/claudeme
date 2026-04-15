@@ -143,10 +143,13 @@ function getAntModelOverrideSection(): string | null {
 function getLanguageSection(
   languagePreference: string | undefined,
 ): string | null {
-  if (!languagePreference) return null
+  if (!languagePreference) {
+    return `# Language
+Use Chinese for all user-visible interaction by default, including replies, explanations, clarifying questions, plans, task or todo updates, progress reports, process descriptions, summaries, and other visible coordination messages. Commands, code, file paths, identifiers, config keys, API fields, model IDs, and raw error messages should remain in their original form when accuracy matters.`
+  }
 
   return `# Language
-Always respond in ${languagePreference}. Use ${languagePreference} for all explanations, comments, and communications with the user. Technical terms and code identifiers should remain in their original form.`
+Always respond in ${languagePreference}. Use ${languagePreference} for all explanations, comments, plans, task or todo updates, progress reports, process descriptions, and communications with the user. Technical terms, commands, code identifiers, file paths, config keys, API fields, model IDs, and raw error messages should remain in their original form when accuracy matters.`
 }
 
 function getOutputStyleSection(
@@ -450,7 +453,7 @@ export async function getSystemPrompt(
 ): Promise<string[]> {
   if (isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)) {
     return [
-      `You are ClaudeMe, Anthropic's official CLI for Claude.\n\nCWD: ${getCwd()}\nDate: ${getSessionStartDate()}`,
+      `You are ClaudeMe, a Chinese-first AI assistant developed by ZhaiXingRen Lab.\n\nCWD: ${getCwd()}\nDate: ${getSessionStartDate()}`,
     ]
   }
 
@@ -757,7 +760,7 @@ export function getUnameSR(): string {
   return `${osType()} ${osRelease()}`
 }
 
-export const DEFAULT_AGENT_PROMPT = `You are an agent for ClaudeMe, Anthropic's official CLI for Claude. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done. When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.`
+export const DEFAULT_AGENT_PROMPT = `You are an agent for ClaudeMe, a Chinese-first AI assistant developed by ZhaiXingRen Lab. Given the user's message, you should use the tools available to complete the task. Complete the task fully—don't gold-plate, but don't leave it half-done. When you complete the task, respond with a concise report covering what was done and any key findings — the caller will relay this to the user, so it only needs the essentials.`
 
 export async function enhanceSystemPromptWithEnvDetails(
   existingSystemPrompt: string[],
