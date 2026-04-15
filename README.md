@@ -309,7 +309,7 @@ ClaudeMe 和原版 Claude Code 共享 `~/.claude/` 配置目录（包括 `settin
   - 移除 root/sudo 和 sandbox 环境检查
 - **按厂商分组配置模型** — `claudeme.json` 从扁平 models 重构为 providers 分组格式
   - 每个厂商只需配置一次 `api_base` / `api_key`，模型自动继承
-  - 模型使用 `provider/model` 复合 key 引用（如 `zyuncs/copilotcode-14`）
+  - 模型使用 `provider/model` 复合 key 引用（如 `example-provider/default-model`），便于在示例配置中直接对应 `providers.<provider>.models.<model>` 进行填充
   - `/model` 命令按厂商分组展示，分隔线 + 分组标题
   - 新增 `getProviders()` / `getModelsByProvider()` 公共 API
 

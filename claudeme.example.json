@@ -1,13 +1,13 @@
 {
-  "default": "zyuncs/my-model",
+  "default": "example-provider/default-model",
   "providers": {
-    "zyuncs": {
-      "name": "智汇云市场",
+    "example-provider": {
+      "name": "Example Provider",
       "api_base": "https://your-api-provider.com/v1",
       "api_key": "$CLAUDEME_API_KEY",
       "models": {
-        "my-model": {
-          "name": "我的模型",
+        "default-model": {
+          "name": "默认模型",
           "model": "your-model-name",
           "max_tokens": 32000,
           "capabilities": {
@@ -15,8 +15,8 @@
             "tool_calling": true
           }
         },
-        "my-fast-model": {
-          "name": "我的快速模型",
+        "fast-model": {
+          "name": "快速模型",
           "model": "your-fast-model-name",
           "max_tokens": 32000,
           "capabilities": {
@@ -26,14 +26,14 @@
         }
       }
     },
-    "deepseek": {
-      "name": "DeepSeek",
-      "api_base": "https://api.deepseek.com/v1",
-      "api_key": "$DEEPSEEK_API_KEY",
+    "another-provider": {
+      "name": "Another Provider",
+      "api_base": "https://api.example.com/v1",
+      "api_key": "$ANOTHER_PROVIDER_API_KEY",
       "models": {
-        "v3": {
-          "name": "DeepSeek V3",
-          "model": "deepseek-chat",
+        "chat-model": {
+          "name": "聊天模型",
+          "model": "provider-chat-model",
           "max_tokens": 32000,
           "capabilities": {
             "vision": false,
@@ -47,6 +47,6 @@
     "sources": [
       "/path/to/your/knowledge-base"
     ],
-    "model": "zyuncs/my-fast-model"
+    "model": "example-provider/fast-model"
   }
 }

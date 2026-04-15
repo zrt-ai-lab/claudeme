@@ -51,8 +51,8 @@ export interface ModelConfig {
   readonly max_tokens: number
   readonly provider?: 'anthropic' | 'openai-compat'
   readonly capabilities: ModelCapabilities
-  readonly providerKey: string // 如 "zyuncs"
-  readonly providerName: string // 如 "智汇云市场"
+  readonly providerKey: string // 如 "example-provider"
+  readonly providerName: string // 如 "Example Provider"
 }
 
 /** 内部运行时配置 */
