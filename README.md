@@ -215,9 +215,23 @@ cp claudeme.example.json claudeme.json
 
 ### 运行
 
+**源码启动**（在项目目录内）：
+
 ```bash
 bun run dev
 ```
+
+**全局安装**（推荐，任意目录直接用）：
+
+```bash
+# 在项目目录执行一次
+bun link
+
+# 之后在任意目录直接输入 claudeme 即可启动
+claudeme
+```
+
+`bun link` 会在 `~/.bun/bin/` 创建符号链接指向项目，无需每次 cd 到项目目录。更新代码只需 `git pull`，链接自动生效。
 
 启动后即处于 **Bypass Permissions** 模式，所有工具调用自动放行，不会弹确认。
 

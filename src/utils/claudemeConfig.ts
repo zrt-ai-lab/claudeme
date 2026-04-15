@@ -7,7 +7,7 @@
  */
 
 import { readFileSync } from 'fs'
-import { join } from 'path'
+import { join, dirname } from 'path'
 import { logError } from './log.js'
 
 // ─── 类型定义 ───
@@ -83,11 +83,16 @@ function resolveApiKey(raw: string | undefined): string | undefined {
 }
 
 /**
- * 查找 claudeme.json 的路径（从 CWD 向上查找）
+ * 查找 claudeme.json 的路径
+ * 优先级: CLAUDEME_CONFIG 环境变量 > CWD > 项目根目录（bin/claudeme 所在项目）
  */
 function findConfigPath(): string | null {
-  // 优先从项目根（process.cwd()）查找
-  const candidates = [join(process.cwd(), 'claudeme.json')]
+  // 项目根目录：从当前文件位置向上推导
+  const projectRoot = join(dirname(new URL(import.meta.url).pathname), '..', '..')
+  const candidates = [
+    join(process.cwd(), 'claudeme.json'),    // CWD（兼容 bun run dev）
+    join(projectRoot, 'claudeme.json'),       // 项目根目录（全局命令时）
+  ]
 
   // 如果 CLAUDEME_CONFIG 环境变量指定了路径，优先用
   if (process.env.CLAUDEME_CONFIG) {
