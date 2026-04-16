@@ -9,12 +9,17 @@ import { Box, Text } from '../ink.js';
 import { getSSLErrorHint } from '../services/api/errorUtils.js';
 import { getUserAgent } from './http.js';
 import { logError } from './log.js';
+import * as claudemeConfig from './claudemeConfig.js';
 export interface PreflightCheckResult {
   success: boolean;
   error?: string;
   sslHint?: string;
 }
 async function checkEndpoints(): Promise<PreflightCheckResult> {
+  // ClaudeMe: 有 claudeme.json 配置 — 跳过 Anthropic 连通性检查
+  if (claudemeConfig.hasClaudemeConfig()) {
+    return { success: true };
+  }
   try {
     const oauthConfig = getOauthConfig();
     const tokenUrl = new URL(oauthConfig.TOKEN_URL);

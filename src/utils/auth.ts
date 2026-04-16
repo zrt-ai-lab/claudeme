@@ -97,15 +97,11 @@ function isManagedOAuthContext(): boolean {
 }
 
 /**
- * ClaudeMe: Check if current model is configured as openai-compat via claudeme.json.
- * When true, Anthropic auth / preflight / preconnect should be skipped entirely.
+ * ClaudeMe: 有 claudeme.json 就意味着用户自己管模型路由和认证，
+ * 不走 Anthropic 的 OAuth / preflight / preconnect / API key 验证。
  */
-function isClaudemeOpenAICompat(): boolean {
-  try {
-    return claudemeConfig.hasClaudemeConfig() && claudemeConfig.isOpenAICompatModel()
-  } catch {
-    return false
-  }
+function isClaudemeManaged(): boolean {
+  return claudemeConfig.hasClaudemeConfig()
 }
 
 /** Whether we are supporting direct 1P auth. */
@@ -125,8 +121,8 @@ export function isAnthropicAuthEnabled(): boolean {
     return !!process.env.CLAUDE_CODE_OAUTH_TOKEN
   }
 
-  // ClaudeMe: using openai-compat provider via claudeme.json — skip Anthropic auth
-  if (isClaudemeOpenAICompat()) {
+  // ClaudeMe: 有 claudeme.json 配置 — 完全跳过 Anthropic 认证
+  if (isClaudemeManaged()) {
     return false
   }
 

@@ -41,13 +41,9 @@ export function preconnectAnthropicApi(): void {
   ) {
     return
   }
-  // ClaudeMe: skip preconnect when using openai-compat provider via claudeme.json
-  try {
-    if (claudemeConfig.hasClaudemeConfig() && claudemeConfig.isOpenAICompatModel()) {
-      return
-    }
-  } catch {
-    // claudemeConfig not ready yet — fall through to normal preconnect
+  // ClaudeMe: 有 claudeme.json 配置 — 跳过 Anthropic 预连接
+  if (claudemeConfig.hasClaudemeConfig()) {
+    return
   }
   // Skip if proxy/mTLS/unix — SDK's custom dispatcher won't reuse this pool
   if (
