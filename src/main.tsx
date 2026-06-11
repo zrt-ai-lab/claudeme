@@ -2119,6 +2119,18 @@ async function run(): Promise<CommanderCommand> {
     // Compute resolved model for hooks (use user-specified model at launch)
     setInitialMainLoopModel(getUserSpecifiedModelSetting() || null);
     const initialMainLoopModel = getInitialMainLoopModel();
+    // ─── ClaudeMe Fix (Bug #4): pin the session model at startup ───
+    // Without an explicit --model flag, the override stays undefined and
+    // getMainLoopModel() re-reads settings.model from disk on every query.
+    // ~/.claude/settings.json is shared across processes and watched by
+    // chokidar (changeDetector.ts), so /model in another instance would
+    // silently switch this session's model. Pinning the startup snapshot
+    // into the override makes the session model stable for its lifetime;
+    // /model within this session still works (it overwrites the override).
+    if (effectiveModel === undefined && initialMainLoopModel !== null) {
+      setMainLoopModelOverride(initialMainLoopModel);
+    }
+    // ─── End ClaudeMe Fix ───
     const resolvedInitialModel = parseUserSpecifiedModel(initialMainLoopModel ?? getDefaultMainLoopModel());
     let advisorModel: string | undefined;
     if (isAdvisorEnabled()) {
