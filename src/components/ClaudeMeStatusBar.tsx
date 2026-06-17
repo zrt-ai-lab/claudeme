@@ -1,11 +1,11 @@
 /**
- * ClaudeMe 内置状态栏
+ * ClaudeMe 内置状态栏（含镜像精灵）
  *
- * 直接从内部 cost-tracker 读取数据，
- * 显示当前模型、token 用量、上下文窗口百分比、费用等。
- * 动态颜色随上下文使用率变化（绿→黄→红→紫）。
+ * 方案 A 布局：
+ * 第1行：模型 + 进度条 + token 数据 + 费用 ... 右侧精灵动画
+ * 第2行（由 footer 控制）：bypass ... 右侧气泡对话
  *
- * 进度条使用 █/░，填充部分跟随百分比颜色变化。
+ * spiritStatus 由外部传入，便于 footer 在第二行渲染气泡。
  */
 
 import * as React from 'react'
@@ -19,14 +19,16 @@ import {
   getTotalCost,
 } from '../cost-tracker.js'
 import * as claudemeConfig from '../utils/claudemeConfig.js'
+import { SpiritAvatar } from './spirit/index.js'
+import type { SpiritStatus } from './spirit/index.js'
 
 // ─── 常量 ───
 
 const BAR_WIDTH = 12
 
-// ─── 工具函数 ───
+// ─── 工具函数（导出供 hook 使用） ───
 
-function formatTokenCount(n: number): string {
+export function formatTokenCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
   if (n >= 10_000) return `${(n / 1_000).toFixed(0)}k`
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`
@@ -57,38 +59,19 @@ function clamp(n: number): number {
   return Math.min(100, Math.max(0, n))
 }
 
-// ─── 组件 ───
+// ─── 计算上下文百分比的 Hook（供 footer 调用精灵用） ───
 
-type Props = {
-  messages: Message[]
-}
-
-function ClaudeMeStatusBarInner({ messages }: Props): React.ReactNode {
+export function useContextPercent(messages: Message[]): {
+  percent: number
+  totalCost: number
+} {
   const modelConfig = useMemo(() => claudemeConfig.getCurrentModelConfig(), [])
-  const modelName = modelConfig?.name ?? 'Unknown'
   const contextWindow = modelConfig?.context_window ?? 200_000
-  const providerName = modelConfig?.providerName ?? ''
-
-  // 累计 token（从 cost-tracker 全局状态读取）
-  const totalInput = getTotalInputTokens()
-  const totalOutput = getTotalOutputTokens()
   const totalCost = getTotalCost()
-  const totalTokens = totalInput + totalOutput
 
-  // 当前上下文 token 数（代表最近一次 API 请求的上下文快照）
-  // 注意：这不是累计值，而是"单次请求"的上下文大小
-  //
-  // 关键区别：
-  // - totalInput/totalOutput 是所有请求的累计值（会超过 context window）
-  // - currentTokens 是单次请求的上下文大小（不应超过 context window）
-  //
-  // 使用 ref 保持稳定：streaming 过程中最新 message 尚无 usage，
-  // 此时保持上一次有效快照不变，避免在"精确值"和"粗估值"之间跳转
   const lastValidSnapshot = useRef<number>(0)
 
   const currentTokens = useMemo(() => {
-    // 从最后一条有 usage 的 API 响应获取精确的上下文快照
-    // input_tokens = 该次请求发送给模型的全部 context（系统提示+历史+工具定义等）
     const usage = getCurrentUsage(messages)
     if (usage && usage.input_tokens > 0) {
       const snapshot = usage.input_tokens +
@@ -98,9 +81,48 @@ function ClaudeMeStatusBarInner({ messages }: Props): React.ReactNode {
       lastValidSnapshot.current = snapshot
       return snapshot
     }
+    return lastValidSnapshot.current
+  }, [messages])
 
-    // 没有有效 usage — 保持上一次快照值（避免跳转）
-    // 第一次进入（尚无任何 API 响应）时返回 0
+  const percent = contextWindow > 0
+    ? clamp(Math.round((currentTokens / contextWindow) * 100))
+    : 0
+
+  return { percent, totalCost }
+}
+
+// ─── 组件 ───
+
+type Props = {
+  messages: Message[]
+  spiritStatus: SpiritStatus
+}
+
+function ClaudeMeStatusBarInner({ messages, spiritStatus }: Props): React.ReactNode {
+  const modelConfig = useMemo(() => claudemeConfig.getCurrentModelConfig(), [])
+  const modelName = modelConfig?.name ?? 'Unknown'
+  const contextWindow = modelConfig?.context_window ?? 200_000
+  const providerName = modelConfig?.providerName ?? ''
+
+  // 累计 token
+  const totalInput = getTotalInputTokens()
+  const totalOutput = getTotalOutputTokens()
+  const totalCost = getTotalCost()
+  const totalTokens = totalInput + totalOutput
+
+  // 当前上下文 token 数
+  const lastValidSnapshot = useRef<number>(0)
+
+  const currentTokens = useMemo(() => {
+    const usage = getCurrentUsage(messages)
+    if (usage && usage.input_tokens > 0) {
+      const snapshot = usage.input_tokens +
+        usage.cache_creation_input_tokens +
+        usage.cache_read_input_tokens +
+        usage.output_tokens
+      lastValidSnapshot.current = snapshot
+      return snapshot
+    }
     return lastValidSnapshot.current
   }, [messages])
 
@@ -113,8 +135,8 @@ function ClaudeMeStatusBarInner({ messages }: Props): React.ReactNode {
   const barColor = getBarColor(percent)
   const filledCount = Math.round((percent / 100) * BAR_WIDTH)
   const emptyCount = BAR_WIDTH - filledCount
-  const filledBar = '\u2588'.repeat(filledCount)   // █
-  const emptyBar = '\u2591'.repeat(emptyCount)      // ░
+  const filledBar = '\u2588'.repeat(filledCount)
+  const emptyBar = '\u2591'.repeat(emptyCount)
 
   // 费用颜色
   const costColor: BarColor = totalCost > 5 ? 'ansi:red' : totalCost > 1 ? 'ansi:yellow' : 'ansi:green'
@@ -123,19 +145,24 @@ function ClaudeMeStatusBarInner({ messages }: Props): React.ReactNode {
   const modelLabel = providerName ? `${modelName} ${providerName}` : modelName
 
   return (
-    <Box flexDirection="row">
-      <Text color="ansi:cyan" bold>{modelLabel}</Text>
-      <Text>{' '}</Text>
-      <Text color={barColor}>{filledBar}</Text>
-      <Text dimColor>{emptyBar}</Text>
-      <Text color={barColor} bold>{` ${percent}%`}</Text>
-      <Text dimColor>{` ${formatTokenCount(currentTokens)}/${formatTokenCount(contextWindow)}`}</Text>
-      <Text dimColor>{'  in '}</Text>
-      <Text color="ansi:green">{formatTokenCount(totalInput)}</Text>
-      <Text dimColor>{' out '}</Text>
-      <Text color="ansi:blue">{formatTokenCount(totalOutput)}</Text>
-      <Text dimColor>{` total ${formatTokenCount(totalTokens)}  `}</Text>
-      <Text color={costColor}>{formatCost(totalCost)}</Text>
+    <Box flexDirection="row" justifyContent="space-between" width="100%">
+      {/* 左侧：状态数据 */}
+      <Box flexDirection="row" flexShrink={1}>
+        <Text color="ansi:cyan" bold>{modelLabel}</Text>
+        <Text>{' '}</Text>
+        <Text color={barColor}>{filledBar}</Text>
+        <Text dimColor>{emptyBar}</Text>
+        <Text color={barColor} bold>{` ${percent}%`}</Text>
+        <Text dimColor>{` ${formatTokenCount(currentTokens)}/${formatTokenCount(contextWindow)}`}</Text>
+        <Text dimColor>{'  in '}</Text>
+        <Text color="ansi:green">{formatTokenCount(totalInput)}</Text>
+        <Text dimColor>{' out '}</Text>
+        <Text color="ansi:blue">{formatTokenCount(totalOutput)}</Text>
+        <Text dimColor>{` total ${formatTokenCount(totalTokens)}  `}</Text>
+        <Text color={costColor}>{formatCost(totalCost)}</Text>
+      </Box>
+      {/* 右侧：精灵头像 */}
+      <SpiritAvatar status={spiritStatus} />
     </Box>
   )
 }

@@ -19,7 +19,8 @@ import { isFullscreenEnvEnabled } from '../../utils/fullscreen.js';
 import { isUndercover } from '../../utils/undercover.js';
 import { CoordinatorTaskPanel, useCoordinatorTaskCount } from '../CoordinatorAgentStatus.js';
 import { getLastAssistantMessageId, StatusLine, statusLineShouldDisplay } from '../StatusLine.js';
-import { ClaudeMeStatusBar } from '../ClaudeMeStatusBar.js';
+import { ClaudeMeStatusBar, useContextPercent } from '../ClaudeMeStatusBar.js';
+import { SpiritBubble, useSpirit } from '../spirit/index.js';
 import * as claudemeConfig from '../../utils/claudemeConfig.js';
 import { Notifications } from './Notifications.js';
 import { PromptInputFooterLeftSide } from './PromptInputFooterLeftSide.js';
@@ -122,6 +123,15 @@ function PromptInputFooter({
 
   // Hide `? for shortcuts` if the user has a custom status line, or during ctrl-r
   const suppressHint = suppressHintFromProps || statusLineShouldDisplay(settings) || isSearching;
+
+  // 镜像精灵状态（在 footer 层调用，分发给第1行和第2行）
+  const hasClaudeme = claudemeConfig.hasClaudemeConfig();
+  const { percent: contextPercent, totalCost: spiritCost } = useContextPercent(messages);
+  const spiritStatus = useSpirit({
+    isStreaming: isLoading,
+    contextPercent,
+    totalCost: spiritCost,
+  });
   // Fullscreen: portal data to FullscreenLayout — see promptOverlayContext.tsx
   const overlayData = useMemo(() => isFullscreen && suggestions.length ? {
     suggestions,
@@ -138,13 +148,14 @@ function PromptInputFooter({
     return <PromptInputHelpMenu dimColor={true} fixedWidth={true} paddingX={2} />;
   }
   return <>
+      {mode === 'prompt' && !isShort && !exitMessage.show && !isPasting && hasClaudeme && <Box paddingX={2}><ClaudeMeStatusBar messages={messages} spiritStatus={spiritStatus} /></Box>}
       <Box flexDirection={isNarrow ? 'column' : 'row'} justifyContent={isNarrow ? 'flex-start' : 'space-between'} paddingX={2} gap={isNarrow ? 0 : 1}>
         <Box flexDirection="column" flexShrink={isNarrow ? 0 : 1}>
-          {mode === 'prompt' && !isShort && !exitMessage.show && !isPasting && claudemeConfig.hasClaudemeConfig() && <ClaudeMeStatusBar messages={messages} />}
-          {mode === 'prompt' && !isShort && !exitMessage.show && !isPasting && !claudemeConfig.hasClaudemeConfig() && statusLineShouldDisplay(settings) && <StatusLine messagesRef={messagesRef} lastAssistantMessageId={lastAssistantMessageId} vimMode={vimMode} />}
+          {mode === 'prompt' && !isShort && !exitMessage.show && !isPasting && !hasClaudeme && statusLineShouldDisplay(settings) && <StatusLine messagesRef={messagesRef} lastAssistantMessageId={lastAssistantMessageId} vimMode={vimMode} />}
           <PromptInputFooterLeftSide exitMessage={exitMessage} vimMode={vimMode} mode={mode} toolPermissionContext={toolPermissionContext} suppressHint={suppressHint} isLoading={isLoading} tasksSelected={pillSelected} teamsSelected={teamsSelected} teammateFooterIndex={teammateFooterIndex} tmuxSelected={tmuxSelected} isPasting={isPasting} isSearching={isSearching} historyQuery={historyQuery} setHistoryQuery={setHistoryQuery} historyFailedMatch={historyFailedMatch} onOpenTasksDialog={onOpenTasksDialog} />
         </Box>
         <Box flexShrink={1} gap={1}>
+          {hasClaudeme && <SpiritBubble status={spiritStatus} />}
           {isFullscreen ? null : <Notifications apiKeyStatus={apiKeyStatus} autoUpdaterResult={autoUpdaterResult} debug={debug} isAutoUpdating={isAutoUpdating} verbose={verbose} messages={messages} onAutoUpdaterResult={onAutoUpdaterResult} onChangeIsUpdating={onChangeIsUpdating} ideSelection={ideSelection} mcpClients={mcpClients} isInputWrapped={isInputWrapped} isNarrow={isNarrow} />}
           {"external" === 'ant' && isUndercover() && <Text dimColor>undercover</Text>}
           <BridgeStatusIndicator bridgeSelected={bridgeSelected} />
