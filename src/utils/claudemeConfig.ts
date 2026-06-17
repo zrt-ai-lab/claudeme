@@ -23,6 +23,7 @@ export interface ProviderModelEntry {
   readonly name: string
   readonly model: string
   readonly max_tokens: number
+  readonly context_window?: number // 上下文窗口大小（默认 200000）
   readonly capabilities: ModelCapabilities
   readonly api_base?: string // 可选覆盖厂商默认
   readonly api_key?: string // 可选覆盖厂商默认
@@ -50,6 +51,7 @@ export interface ModelConfig {
   readonly api_key?: string
   readonly model: string
   readonly max_tokens: number
+  readonly context_window: number // 上下文窗口大小
   readonly provider?: 'anthropic' | 'openai-compat'
   readonly capabilities: ModelCapabilities
   readonly providerKey: string // 如 "example-provider"
@@ -155,6 +157,7 @@ function normalizeProviders(
         api_key: effectiveApiKey,
         model: entry.model,
         max_tokens: entry.max_tokens,
+        context_window: entry.context_window ?? 200_000,
         provider: entry.provider ?? (effectiveApiBase ? 'openai-compat' : 'anthropic'),
         capabilities: entry.capabilities,
         providerKey,

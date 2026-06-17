@@ -435,10 +435,15 @@ export async function* runAgent({
 
     // Set flag to auto-deny prompts for agents that can't show UI
     // Use explicit canShowPermissionPrompts if provided, otherwise:
+    //   - bypass/acceptEdits: never avoid prompts (permissions already granted, no UI needed)
     //   - bubble mode: always show prompts (bubbles to parent terminal)
     //   - default: !isAsync (sync agents show prompts, async agents don't)
-    const shouldAvoidPrompts =
-      canShowPermissionPrompts !== undefined
+    const parentIsBypass =
+      toolPermissionContext.mode === 'bypassPermissions' ||
+      toolPermissionContext.mode === 'acceptEdits'
+    const shouldAvoidPrompts = parentIsBypass
+      ? false
+      : canShowPermissionPrompts !== undefined
         ? !canShowPermissionPrompts
         : agentPermissionMode === 'bubble'
           ? false

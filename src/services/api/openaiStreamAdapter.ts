@@ -47,6 +47,8 @@ interface StreamState {
   nextBlockIndex: number
   // 是否已发送 message_start
   messageStarted: boolean
+  // 是否已发送 message_stop
+  messageStopped: boolean
   // 文本块是否已开始
   textBlockStarted: boolean
   // tool_calls 追踪：openai index → anthropic block index + 累积 arguments
@@ -220,16 +222,35 @@ export function translateChunk(
       events.push({
         type: 'message_delta',
         delta: { stop_reason: stopReason },
-        usage: { output_tokens: state.outputTokens },
+        usage: {
+          input_tokens: state.inputTokens,
+          output_tokens: state.outputTokens,
+          cache_creation_input_tokens: 0,
+          cache_read_input_tokens: 0,
+        },
       })
       events.push({ type: 'message_stop' })
+      state.messageStopped = true
     }
   }
 
-  // 5. 独立的 usage 事件（有些模型在最后一个 chunk 单独发 usage）
+  // 5. 独立的 usage 事件（有些模型在最后一个 chunk 单独发 usage，在 finish_reason 之后）
   if (chunk.usage && chunk.choices.length === 0) {
-    state.inputTokens = chunk.usage.prompt_tokens
-    state.outputTokens = chunk.usage.completion_tokens
+    state.inputTokens = chunk.usage.prompt_tokens || state.inputTokens
+    state.outputTokens = chunk.usage.completion_tokens || state.outputTokens
+    // 如果 message_stop 已经发送但收到了新的 usage 数据，补发 message_delta 更新 usage
+    if (state.messageStopped && (chunk.usage.prompt_tokens > 0 || chunk.usage.completion_tokens > 0)) {
+      events.push({
+        type: 'message_delta',
+        delta: { stop_reason: 'end_turn' },
+        usage: {
+          input_tokens: state.inputTokens,
+          output_tokens: state.outputTokens,
+          cache_creation_input_tokens: 0,
+          cache_read_input_tokens: 0,
+        },
+      })
+    }
   }
 
   return events
@@ -246,6 +267,7 @@ export function createStreamState(): StreamState {
     outputTokens: 0,
     nextBlockIndex: 0,
     messageStarted: false,
+    messageStopped: false,
     textBlockStarted: false,
     toolCallMap: new Map(),
   }

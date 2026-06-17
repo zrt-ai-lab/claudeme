@@ -10,6 +10,7 @@
           "name": "默认模型",
           "model": "your-model-name",
           "max_tokens": 32000,
+          "context_window": 200000,
           "capabilities": {
             "vision": true,
             "tool_calling": true
@@ -19,6 +20,7 @@
           "name": "快速模型",
           "model": "your-fast-model-name",
           "max_tokens": 32000,
+          "context_window": 131072,
           "capabilities": {
             "vision": false,
             "tool_calling": true
@@ -35,6 +37,7 @@
           "name": "聊天模型",
           "model": "provider-chat-model",
           "max_tokens": 32000,
+          "context_window": 200000,
           "capabilities": {
             "vision": false,
             "tool_calling": true
