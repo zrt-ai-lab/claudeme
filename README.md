@@ -40,6 +40,7 @@ Claude Code 很强，但：
 | 📚 Wiki 知识库 | 个人知识体系自动构建——导入、查询、扫描、健康检查，知识长在终端里 |
 | 📦 Skills 生态 | 内置丰富 Skills，支持自定义扩展 |
 | 🎨 中文 UI | Spinner、Tips、提示信息全面中文化 |
+| 📊 内置状态栏 | 实时显示模型、上下文进度条（动态颜色）、token 用量、费用 |
 | ⚡ 极速体验 | Bun 运行时，启动快、响应快 |
 
 ## Wiki 知识库 (v1.0.2 新增)
@@ -180,12 +181,14 @@ cp claudeme.example.json claudeme.json
           "name": "Claude 4.6 Opus",
           "model": "claude-opus",
           "max_tokens": 32000,
+          "context_window": 200000,
           "capabilities": { "vision": true, "tool_calling": true }
         },
         "sonnet": {
           "name": "Claude 4.6 Sonnet",
           "model": "claude-sonnet",
           "max_tokens": 32000,
+          "context_window": 200000,
           "capabilities": { "vision": true, "tool_calling": true }
         }
       }
@@ -199,6 +202,7 @@ cp claudeme.example.json claudeme.json
           "name": "DeepSeek V3",
           "model": "deepseek-chat",
           "max_tokens": 32000,
+          "context_window": 131072,
           "capabilities": { "vision": false, "tool_calling": true }
         }
       }
@@ -280,7 +284,43 @@ ClaudeMe 和原版 Claude Code 共享 `~/.claude/` 配置目录（包括 `settin
 - **原版 Claude Code** 需要手动传 `--dangerously-skip-permissions` 才能跳过确认
 - **ClaudeMe** 默认就是 Bypass Permissions，无需任何 flag
 
+## 升级
+
+已全局安装的用户，升级只需：
+
+```bash
+cd /path/to/claudeme   # 进入 claudeme 项目目录
+git pull               # 拉取最新代码
+bun install            # 更新依赖（如有变化）
+```
+
+`bun link` 创建的符号链接自动指向最新代码，无需重新 link。
+
 ## 版本历史
+
+### v1.0.3 — 内置状态栏 + 流式修复
+
+- **内置 TUI 状态栏** — 实时显示模型、provider、上下文进度条、token 用量、费用
+  - 进度条 █/░ 动态颜色：绿(0-40%) → 黄(40-65%) → 红(65-85%) → 紫(85%+)
+  - 区分"当前上下文快照"和"累计 token 消耗"，数据准确不跳转
+  - 有 `claudeme.json` 配置时自动替换原版 StatusLine
+- **`context_window` 配置字段** — 模型配置新增上下文窗口大小（默认 200000），状态栏百分比基于此计算
+- **OpenAI 流式 usage 修复** — `message_delta` 携带完整 usage 数据；处理 usage chunk 在 finish_reason 之后到达的时序问题
+- **子 Agent 权限继承修复** — Bypass Permissions 模式下并行子 Agent 不再弹权限确认
+
+**配置变更**：模型配置新增可选字段 `context_window`（单位 token），用于状态栏进度条计算：
+
+```json
+{
+  "name": "Claude 4.6 Opus",
+  "model": "claude-opus",
+  "max_tokens": 32000,
+  "context_window": 200000,
+  "capabilities": { "vision": true, "tool_calling": true }
+}
+```
+
+不配置则默认 200000。常见值：Claude/GPT 系列 200000，Qwen/DeepSeek/Kimi 131072，Gemini 1000000。
 
 ### v1.0.2 — Wiki 知识库
 
@@ -325,9 +365,9 @@ ClaudeMe 和原版 Claude Code 共享 `~/.claude/` 配置目录（包括 `settin
 
 ## 项目状态
 
-🚀 **v1.0.2** —— 持续迭代中
+🚀 **v1.0.3** —— 持续迭代中
 
-**当前阶段**：极致的 AI 编程终端 + 个人知识库——多厂商多模型、零确认、中文原生、知识长在终端里。
+**当前阶段**：极致的 AI 编程终端 + 个人知识库——多厂商多模型、零确认、中文原生、实时状态监控、知识长在终端里。
 
 **下一步**：向量检索、自动触发扫描、模型主动查询知识库、个性化记忆——让 ClaudeMe 越来越像你。
 
