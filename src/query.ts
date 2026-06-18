@@ -110,6 +110,7 @@ import {
 } from './bootstrap/state.js'
 import { createBudgetTracker, checkTokenBudget } from './query/tokenBudget.js'
 import { count } from './utils/array.js'
+import { executePostTurnReview } from './services/spirit-evolution/index.js'
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const snipModule = feature('HISTORY_SNIP')
@@ -1353,6 +1354,9 @@ async function* queryLoop(
           })
         }
       }
+
+      // 镜像精灵：fire-and-forget 自进化 review
+      void executePostTurnReview(messagesForQuery)
 
       return { reason: 'completed' }
     }

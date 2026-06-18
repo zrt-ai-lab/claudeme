@@ -64,6 +64,16 @@ export const DONE_DIALOGUES: readonly SpiritDialogue[] = [
   { text: '又解决一个!', duration: 2500 },
 ]
 
+// ─── 学习完成（review 写入知识后触发） ───
+
+export const LEARNED_DIALOGUES: readonly SpiritDialogue[] = [
+  { text: '学到新东西了!', duration: 3500 },
+  { text: '又长记性了~', duration: 3000 },
+  { text: '记住了，下次不犯', duration: 3500 },
+  { text: '经验+1', duration: 2500 },
+  { text: '写进小本本了', duration: 3000 },
+]
+
 /** 从数组中随机选一个 */
 export function pickRandom<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!

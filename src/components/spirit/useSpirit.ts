@@ -20,9 +20,11 @@ import {
   CONTEXT_DIALOGUES,
   INACTIVE_DIALOGUES,
   DONE_DIALOGUES,
+  LEARNED_DIALOGUES,
   pickRandom,
   type SpiritDialogue,
 } from './dialogues.js'
+import { onSpiritEvent } from '../../services/spirit-evolution/events.js'
 
 export interface SpiritStatus {
   /** 当前显示状态 */
@@ -197,6 +199,16 @@ export function useSpirit(options: UseSpiritOptions): SpiritStatus {
 
     return () => clearInterval(timer)
   }, [baseState, showBubble])
+
+  // ─── 自进化 review 完成通知 ───
+  useEffect(() => {
+    const unsubscribe = onSpiritEvent((payload) => {
+      if (payload.type === 'review_done') {
+        showBubble(pickRandom(LEARNED_DIALOGUES))
+      }
+    })
+    return unsubscribe
+  }, [showBubble])
 
   // ─── 输出 ───
   const effectiveState = bubble ? 'talking' : baseState

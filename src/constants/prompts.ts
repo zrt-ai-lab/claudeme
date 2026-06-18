@@ -59,6 +59,7 @@ import { TICK_TAG } from './xml.js'
 import { logForDebugging } from '../utils/debug.js'
 import { loadMemoryPrompt } from '../memdir/memdir.js'
 import { loadWikiPrompt } from '../wiki/wiki.js'
+import { getSpiritSystemPromptSection as loadSpiritPrompt } from '../services/spirit-evolution/index.js'
 import { isUndercover } from '../utils/undercover.js'
 import { isMcpInstructionsDeltaEnabled } from '../utils/mcpInstructionsDelta.js'
 
@@ -498,6 +499,7 @@ ${CYBER_RISK_INSTRUCTION}`,
     ),
     systemPromptSection('memory', () => loadMemoryPrompt()),
     systemPromptSection('wiki', () => loadWikiPrompt()),
+    systemPromptSection('spirit', () => loadSpiritPrompt()),
     systemPromptSection('ant_model_override', () =>
       getAntModelOverrideSection(),
     ),
