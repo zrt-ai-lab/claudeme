@@ -1,6 +1,7 @@
 // biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
 import { CONTEXT_1M_BETA_HEADER } from '../constants/betas.js'
 import { getGlobalConfig } from './config.js'
+import { getCurrentModelConfig } from './claudemeConfig.js'
 import { isEnvTruthy } from './envUtils.js'
 import { getCanonicalName } from './model/model.js'
 import { getModelCapability } from './model/modelCapabilities.js'
@@ -94,6 +95,13 @@ export function getContextWindowForModel(
       return antModel.contextWindow
     }
   }
+
+  // ClaudeMe: read context_window from claudeme.json for third-party models
+  const claudemeModel = getCurrentModelConfig()
+  if (claudemeModel?.context_window && claudemeModel.context_window > 0) {
+    return claudemeModel.context_window
+  }
+
   return MODEL_CONTEXT_WINDOW_DEFAULT
 }
 
