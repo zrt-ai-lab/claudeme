@@ -740,7 +740,7 @@ export async function main() {
       }
       // Forward session-resume + model flags to the remote CLI's initial spawn.
       // --continue/-c and --resume <uuid> operate on the REMOTE session history
-      // (which persists under the remote's ~/.claude/projects/<cwd>/).
+      // (which persists under the remote's ~/.myccm/projects/<cwd>/).
       // --model controls which model the remote uses.
       const extractFlag = (flag: string, opts: {
         hasValue?: boolean;
@@ -1036,7 +1036,7 @@ async function run(): Promise<CommanderCommand> {
       });
     }
 
-    // Assistant mode: when .claude/settings.json has assistant: true AND
+    // Assistant mode: when .myccm/settings.json has assistant: true AND
     // the tengu_kairos GrowthBook gate is on, force brief on. Permission
     // mode is left to the user — settings defaultMode or --permission-mode
     // apply as normal. REPL-typed messages already default to 'next'
@@ -1046,10 +1046,10 @@ async function run(): Promise<CommanderCommand> {
     // kairosEnabled is computed once here and reused at the
     // getAssistantSystemPromptAddendum() call site further down.
     //
-    // Trust gate: .claude/settings.json is attacker-controllable in an
+    // Trust gate: .myccm/settings.json is attacker-controllable in an
     // untrusted clone. We run ~1000 lines before showSetupScreens() shows
     // the trust dialog, and by then we've already appended
-    // .claude/agents/assistant.md to the system prompt. Refuse to activate
+    // .myccm/agents/assistant.md to the system prompt. Refuse to activate
     // until the directory has been explicitly trusted.
     let kairosEnabled = false;
     let assistantTeamContext: Awaited<ReturnType<NonNullable<typeof assistantModule>['initializeAssistantTeam']>> | undefined;
@@ -1957,7 +1957,7 @@ async function run(): Promise<CommanderCommand> {
     }
     if (getIsNonInteractiveSession()) {
       // Apply full merged settings env now (including project-scoped
-      // .claude/settings.json PATH/GIT_DIR/GIT_WORK_TREE) so gitExe() and
+      // .myccm/settings.json PATH/GIT_DIR/GIT_WORK_TREE) so gitExe() and
       // the git spawn below see it. Trust is implicit in -p mode; the
       // docstring at managedEnv.ts:96-97 says this applies "potentially
       // dangerous environment variables such as LD_PRELOAD, PATH" from all
@@ -2122,7 +2122,7 @@ async function run(): Promise<CommanderCommand> {
     // ─── ClaudeMe Fix (Bug #4): pin the session model at startup ───
     // Without an explicit --model flag, the override stays undefined and
     // getMainLoopModel() re-reads settings.model from disk on every query.
-    // ~/.claude/settings.json is shared across processes and watched by
+    // ~/.myccm/settings.json is shared across processes and watched by
     // chokidar (changeDetector.ts), so /model in another instance would
     // silently switch this session's model. Pinning the startup snapshot
     // into the override makes the session model stable for its lifetime;
@@ -2541,7 +2541,7 @@ async function run(): Promise<CommanderCommand> {
     void logPermissionContextForAnts(null, 'initialization');
     logManagedSettings();
 
-    // Register PID file for concurrent-session detection (~/.claude/sessions/)
+    // Register PID file for concurrent-session detection (~/.myccm/sessions/)
     // and fire multi-clauding telemetry. Lives here (not init.ts) so only the
     // REPL path registers — not subcommands like `claude doctor`. Chained:
     // count must run after register's write completes or it misses our own file.
@@ -3431,7 +3431,7 @@ async function run(): Promise<CommanderCommand> {
         // Check if TUI mode is enabled - description is only optional in TUI mode
         const isRemoteTuiEnabled = getFeatureValue_CACHED_MAY_BE_STALE('tengu_remote_backend', false);
         if (!isRemoteTuiEnabled && !hasInitialPrompt) {
-          return await exitWithError(root, 'Error: --remote requires a description.\nUsage: claude --remote "your task description"', () => gracefulShutdown(1));
+          return await exitWithError(root, 'Error: --remote requires a description.\nUsage: claudeme --remote "your task description"', () => gracefulShutdown(1));
         }
         logEvent('tengu_remote_create_session', {
           has_initial_prompt: String(hasInitialPrompt) as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
@@ -3455,7 +3455,7 @@ async function run(): Promise<CommanderCommand> {
           // Original behavior: print session info and exit
           process.stdout.write(`Created remote session: ${createdSession.title}\n`);
           process.stdout.write(`View: ${getRemoteSessionUrl(createdSession.id)}?m=0\n`);
-          process.stdout.write(`Resume with: claude --teleport ${createdSession.id}\n`);
+          process.stdout.write(`Resume with: claudeme --teleport ${createdSession.id}\n`);
           await gracefulShutdown(0);
           process.exit(0);
         }
@@ -3567,7 +3567,7 @@ async function run(): Promise<CommanderCommand> {
                   }
                 } else {
                   // No known paths - show original error
-                  throw new TeleportOperationError(`You must run claude --teleport ${teleport} from a checkout of ${sessionRepo}.`, chalk.red(`You must run claude --teleport ${teleport} from a checkout of ${chalk.bold(sessionRepo)}.\n`));
+                  throw new TeleportOperationError(`You must run claudeme --teleport ${teleport} from a checkout of ${sessionRepo}.`, chalk.red(`You must run claudeme --teleport ${teleport} from a checkout of ${chalk.bold(sessionRepo)}.\n`));
                 }
               }
             } else if (repoValidation.status === 'error') {
@@ -4235,7 +4235,7 @@ async function run(): Promise<CommanderCommand> {
   });
 
   // Plugin uninstall command
-  pluginCmd.command('uninstall <plugin>').alias('remove').alias('rm').description('Uninstall an installed plugin').option('-s, --scope <scope>', 'Uninstall from scope: user, project, or local', 'user').option('--keep-data', "Preserve the plugin's persistent data directory (~/.claude/plugins/data/{id}/)").addOption(coworkOption()).action(async (plugin: string, options: {
+  pluginCmd.command('uninstall <plugin>').alias('remove').alias('rm').description('Uninstall an installed plugin').option('-s, --scope <scope>', 'Uninstall from scope: user, project, or local', 'user').option('--keep-data', "Preserve the plugin's persistent data directory (~/.myccm/plugins/data/{id}/)").addOption(coworkOption()).action(async (plugin: string, options: {
     scope?: string;
     cowork?: boolean;
     keepData?: boolean;

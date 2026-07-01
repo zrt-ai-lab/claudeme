@@ -10,12 +10,11 @@ import { logForDebugging } from '../../utils/debug.js'
 import { logError } from '../../utils/log.js'
 import { isEssentialTrafficOnly } from '../../utils/privacyLevel.js'
 import { getOAuthHeaders, prepareApiRequest } from '../../utils/teleport/api.js'
-import type {
-  ReferralCampaign,
-  ReferralEligibilityResponse,
-  ReferralRedemptionsResponse,
-  ReferrerRewardInfo,
-} from '../oauth/types.js'
+// ClaudeMe: types inlined since services/oauth/types.js was deleted.
+type ReferralCampaign = 'claude_code_guest_pass' | string
+interface ReferralEligibilityResponse { eligible: boolean; campaign?: string; [key: string]: unknown }
+interface ReferralRedemptionsResponse { redemptions: unknown[]; [key: string]: unknown }
+interface ReferrerRewardInfo { [key: string]: unknown }
 
 // Cache expiration time: 24 hours (eligibility changes only on subscription/experiment changes)
 const CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000

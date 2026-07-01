@@ -9,7 +9,12 @@ import { Box, Link, Text, useInput } from '../../ink.js';
 import { useKeybinding } from '../../keybindings/useKeybinding.js';
 import { logEvent } from '../../services/analytics/index.js';
 import { fetchReferralRedemptions, formatCreditAmount, getCachedOrFetchPassesEligibility } from '../../services/api/referral.js';
-import type { ReferralRedemptionsResponse, ReferrerRewardInfo } from '../../services/oauth/types.js';
+// ClaudeMe: types inlined since services/oauth/types.js was deleted.
+type ReferralRedemptionsResponse = {
+  redemptions: Array<{ redeemed_at: string }>;
+  limit: number;
+};
+type ReferrerRewardInfo = { amount_minor_units: number; currency: string };
 import { count } from '../../utils/array.js';
 import { logError } from '../../utils/log.js';
 import { Pane } from '../design-system/Pane.js';

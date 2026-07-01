@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { getOauthConfig } from 'src/constants/oauth.js'
-import { getOrganizationUUID } from 'src/services/oauth/client.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../../services/analytics/growthbook.js'
 import {
   checkAndRefreshOAuthTokenIfNeeded,
@@ -89,10 +88,11 @@ export async function checkGithubAppInstalled(
       return false
     }
 
-    const orgUUID = await getOrganizationUUID()
+    // ClaudeMe: getOrganizationUUID removed (OAuth service deleted).
+    const orgUUID: string | undefined = undefined
     if (!orgUUID) {
       logForDebugging(
-        'checkGithubAppInstalled: No org UUID found, assuming app not installed',
+        'checkGithubAppInstalled: No org UUID found (OAuth not supported in ClaudeMe), assuming app not installed',
       )
       return false
     }
@@ -169,9 +169,10 @@ export async function checkGithubTokenSynced(): Promise<boolean> {
       return false
     }
 
-    const orgUUID = await getOrganizationUUID()
+    // ClaudeMe: getOrganizationUUID removed (OAuth service deleted).
+    const orgUUID: string | undefined = undefined
     if (!orgUUID) {
-      logForDebugging('checkGithubTokenSynced: No org UUID found')
+      logForDebugging('checkGithubTokenSynced: No org UUID found (OAuth not supported in ClaudeMe)')
       return false
     }
 

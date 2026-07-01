@@ -1,7 +1,6 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { randomUUID } from 'crypto'
 import { getOauthConfig } from 'src/constants/oauth.js'
-import { getOrganizationUUID } from 'src/services/oauth/client.js'
 import z from 'zod/v4'
 import { getClaudeAIOAuthTokens } from '../auth.js'
 import { logForDebugging } from '../debug.js'
@@ -189,9 +188,10 @@ export async function prepareApiRequest(): Promise<{
     )
   }
 
-  const orgUUID = await getOrganizationUUID()
+  // ClaudeMe: getOrganizationUUID removed (OAuth service deleted).
+  const orgUUID: string | undefined = undefined
   if (!orgUUID) {
-    throw new Error('Unable to get organization UUID')
+    throw new Error('Unable to get organization UUID. OAuth is not supported in ClaudeMe.')
   }
 
   return { accessToken, orgUUID }

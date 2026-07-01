@@ -368,7 +368,7 @@ const externalTips: Tip[] = [
   {
     id: 'continue',
     content: async () =>
-      '运行 claude --continue 或 claude --resume 恢复上次对话',
+      '运行 claudeme --continue 或 claudeme --resume 恢复上次对话',
     cooldownSessions: 10,
     isRelevant: async () => true,
   },
@@ -383,7 +383,7 @@ const externalTips: Tip[] = [
   {
     id: 'custom-commands',
     content: async () =>
-      '在项目的 .claude/skills/ 或 ~/.claude/skills/ 里放 .md 文件来创建自定义技能',
+      '在项目的 .myccm/skills/ 或 ~/.myccm/skills/ 里放 .md 文件来创建自定义技能',
     cooldownSessions: 15,
     async isRelevant() {
       const config = getGlobalConfig()

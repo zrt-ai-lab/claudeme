@@ -1,0 +1,4 @@
+test-wiki/
+node_modules/
+bun.lock
+dist/

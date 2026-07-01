@@ -1,0 +1,19 @@
+{
+  "name": "wiki-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "ingest": "bun run src/index.ts ingest",
+    "query": "bun run src/index.ts query",
+    "lint": "bun run src/index.ts lint",
+    "status": "bun run src/index.ts status"
+  },
+  "dependencies": {
+    "turndown": "^7.2.4"
+  },
+  "devDependencies": {
+    "@types/turndown": "^5.0.6"
+  }
+}

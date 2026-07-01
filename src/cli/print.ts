@@ -188,7 +188,8 @@ import {
 } from 'src/services/PromptSuggestion/promptSuggestion.js'
 import { getLastCacheSafeParams } from 'src/utils/forkedAgent.js'
 import { getAccountInformation } from 'src/utils/auth.js'
-import { OAuthService } from 'src/services/oauth/index.js'
+// ClaudeMe: OAuthService removed (OAuth service deleted). Stub used in place.
+const OAuthService = class { startOAuthFlow() { return Promise.reject(new Error('OAuth is not supported in ClaudeMe')) } handleManualAuthCodeInput() {} cleanup() {} }
 import { installOAuthTokens } from 'src/cli/handlers/auth.js'
 import { getAPIProvider } from 'src/utils/model/providers.js'
 import type { HookCallbackMatcher } from 'src/types/hooks.js'

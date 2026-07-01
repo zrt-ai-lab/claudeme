@@ -20,7 +20,6 @@ import { CreatingStep } from './CreatingStep.js';
 import { ErrorStep } from './ErrorStep.js';
 import { ExistingWorkflowStep } from './ExistingWorkflowStep.js';
 import { InstallAppStep } from './InstallAppStep.js';
-import { OAuthFlowStep } from './OAuthFlowStep.js';
 import { SuccessStep } from './SuccessStep.js';
 import { setupGitHubActions } from './setupGitHubActions.js';
 import type { State, Warning, Workflow } from './types.js';
@@ -578,7 +577,8 @@ function InstallGitHubApp(props: {
         }
       }} />;
     case 'oauth-flow':
-      return <OAuthFlowStep onSuccess={handleOAuthSuccess} onCancel={handleOAuthCancel} />;
+      // ClaudeMe: OAuthFlowStep removed (OAuth not supported). Fall through to error.
+      return null;
   }
 }
 export async function call(onDone: LocalJSXCommandOnDone): Promise<React.ReactNode> {

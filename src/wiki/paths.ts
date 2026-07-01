@@ -4,7 +4,7 @@ import { mkdirSync, existsSync, writeFileSync } from 'fs'
 import { join, resolve } from 'path'
 import { getClaudeConfigHomeDir } from '../utils/envUtils.js'
 
-/** 默认 wiki 目录：~/.claude/wiki/ */
+/** 默认 wiki 目录：~/.myccm/wiki/ */
 function getDefaultWikiDir(): string {
   return join(getClaudeConfigHomeDir(), 'wiki')
 }

@@ -22,7 +22,7 @@ const DEFAULT_EXCLUDES = [
   '.git',
   '.venv',
   '.opencode',
-  '.claude',
+  '.myccm',
   '__pycache__',
   'dist',
   'build',

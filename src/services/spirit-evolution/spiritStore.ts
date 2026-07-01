@@ -1,7 +1,7 @@
 /**
  * 镜像精灵 — 自进化存储层
  *
- * 管理 ~/.claude/spirit/ 目录下的知识文件：
+ * 管理 ~/.myccm/spirit/ 目录下的知识文件：
  * - INSIGHTS.md  — 用户偏好（格式/风格/习惯）
  * - SKILLS.md    — 可复用操作模式
  * - PITFALLS.md  — 避坑指南（犯过的错）
@@ -16,7 +16,7 @@ import { homedir } from 'node:os'
 
 // ─── 路径 ───
 
-const SPIRIT_DIR = path.join(homedir(), '.claude', 'spirit')
+const SPIRIT_DIR = path.join(homedir(), '.myccm', 'spirit')
 
 const FILES = {
   insights: path.join(SPIRIT_DIR, 'INSIGHTS.md'),

@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { getOauthConfig } from 'src/constants/oauth.js'
-import { getOrganizationUUID } from 'src/services/oauth/client.js'
 import { getClaudeAIOAuthTokens } from '../auth.js'
 import { toError } from '../errors.js'
 import { logError } from '../log.js'
@@ -37,9 +36,10 @@ export async function fetchEnvironments(): Promise<EnvironmentResource[]> {
     )
   }
 
-  const orgUUID = await getOrganizationUUID()
+  // ClaudeMe: getOrganizationUUID removed (OAuth service deleted).
+  const orgUUID: string | undefined = undefined
   if (!orgUUID) {
-    throw new Error('Unable to get organization UUID')
+    throw new Error('Unable to get organization UUID. OAuth is not supported in ClaudeMe.')
   }
 
   const url = `${getOauthConfig().BASE_API_URL}/v1/environment_providers`
@@ -80,9 +80,10 @@ export async function createDefaultCloudEnvironment(
   if (!accessToken) {
     throw new Error('No access token available')
   }
-  const orgUUID = await getOrganizationUUID()
+  // ClaudeMe: getOrganizationUUID removed (OAuth service deleted).
+  const orgUUID: string | undefined = undefined
   if (!orgUUID) {
-    throw new Error('Unable to get organization UUID')
+    throw new Error('Unable to get organization UUID. OAuth is not supported in ClaudeMe.')
   }
 
   const url = `${getOauthConfig().BASE_API_URL}/v1/environment_providers/cloud/create`

@@ -262,7 +262,6 @@ import { useDeprecationWarningNotification } from 'src/hooks/notifs/useDeprecati
 import { useNpmDeprecationNotification } from 'src/hooks/notifs/useNpmDeprecationNotification.js';
 import { useIDEStatusIndicator } from 'src/hooks/notifs/useIDEStatusIndicator.js';
 import { useModelMigrationNotifications } from 'src/hooks/notifs/useModelMigrationNotifications.js';
-import { useCanSwitchToExistingSubscription } from 'src/hooks/notifs/useCanSwitchToExistingSubscription.js';
 import { useTeammateLifecycleNotification } from 'src/hooks/notifs/useTeammateShutdownNotification.js';
 import { useFastModeNotification } from 'src/hooks/notifs/useFastModeNotification.js';
 import { AutoRunIssueNotification, shouldAutoRunIssue, getAutoRunIssueReasonText, getAutoRunCommand, type AutoRunIssueReason } from '../utils/autoRunIssue.js';
@@ -775,7 +774,6 @@ export function REPL({
   const [showDesktopUpsellStartup, setShowDesktopUpsellStartup] = useState(() => shouldShowDesktopUpsellStartup());
   // notifications
   useModelMigrationNotifications();
-  useCanSwitchToExistingSubscription();
   useIDEStatusIndicator({
     ideSelection,
     mcpClients,
@@ -1680,7 +1678,7 @@ export function REPL({
     if (wt.creationDurationMs < 15_000) return;
     worktreeTipShownRef.current = true;
     const secs = Math.round(wt.creationDurationMs / 1000);
-    setMessages(prev => [...prev, createSystemMessage(`Worktree creation took ${secs}s. For large repos, set \`worktree.sparsePaths\` in .claude/settings.json to check out only the directories you need — e.g. \`{"worktree": {"sparsePaths": ["src", "packages/foo"]}}\`.`, 'info')]);
+    setMessages(prev => [...prev, createSystemMessage(`Worktree creation took ${secs}s. For large repos, set \`worktree.sparsePaths\` in .myccm/settings.json to check out only the directories you need — e.g. \`{"worktree": {"sparsePaths": ["src", "packages/foo"]}}\`.`, 'info')]);
   }, [setMessages]);
 
   // Hide spinner when the only in-progress tool is Sleep
@@ -4090,7 +4088,7 @@ export function REPL({
     onSubmitMessage: handleIncomingPrompt
   });
 
-  // Scheduled tasks from .claude/scheduled_tasks.json (CronCreate/Delete/List)
+  // Scheduled tasks from .myccm/scheduled_tasks.json (CronCreate/Delete/List)
   if (feature('AGENT_TRIGGERS')) {
     // Assistant mode bypasses the isLoading gate (the proactive tick →
     // Sleep → tick loop would otherwise starve the scheduler).

@@ -19,7 +19,6 @@ import { getOriginalCwd, getSessionId } from '../bootstrap/state.js'
 import type { SDKMessage } from '../entrypoints/agentSdkTypes.js'
 import type { SDKControlResponse } from '../entrypoints/sdk/controlTypes.js'
 import { getFeatureValue_CACHED_WITH_REFRESH } from '../services/analytics/growthbook.js'
-import { getOrganizationUUID } from '../services/oauth/client.js'
 import {
   isPolicyAllowed,
   waitForPolicyLimitsToLoad,
@@ -383,16 +382,10 @@ export async function initReplBridge(
     5 * 60 * 1000,
   )
 
-  // Fetch orgUUID before the v1/v2 branch — both paths need it. v1 for
-  // environment registration; v2 for archive (which lives at the compat
-  // /v1/sessions/{id}/archive, not /v1/code/sessions). Without it, v2
-  // archive 404s and sessions stay alive in CCR after /exit.
-  const orgUUID = await getOrganizationUUID()
-  if (!orgUUID) {
-    logBridgeSkip('no_org_uuid', '[bridge:repl] Skipping: no org UUID')
-    onStateChange?.('failed', '/login')
-    return null
-  }
+  // ClaudeMe: getOrganizationUUID removed (OAuth service deleted).
+  // orgUUID is not available in ClaudeMe; set to undefined and skip the
+  // early-return guard so the bridge can still attempt connection.
+  const orgUUID: string | undefined = undefined
 
   // ── GrowthBook gate: env-less bridge ──────────────────────────────────
   // When enabled, skips the Environments API layer entirely (no register/

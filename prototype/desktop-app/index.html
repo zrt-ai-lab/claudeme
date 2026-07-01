@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClaudeMe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   THEME: DARK
+   ═══════════════════════════════════════════ */
+[data-theme="dark"] {
+  --bg-0: #1a1a1a;
+  --bg-1: #222222;
+  --bg-2: #2a2a2a;
+  --bg-3: #333333;
+  --bg-input: #1e1e1e;
+  --bg-code: #161616;
+  --bg-hover: rgba(255,255,255,0.04);
+  --bg-active: rgba(255,255,255,0.07);
+
+  --border-0: rgba(255,255,255,0.06);
+  --border-1: rgba(255,255,255,0.10);
+  --border-2: rgba(255,255,255,0.15);
+
+  --fg-0: #f0f0f0;
+  --fg-1: #cccccc;
+  --fg-2: #999999;
+  --fg-3: #666666;
+
+  --accent: #e67e22;
+  --accent-subtle: rgba(230,126,34,0.12);
+  --green: #5ab783;
+  --green-subtle: rgba(90,183,131,0.12);
+  --red: #d95555;
+  --red-subtle: rgba(217,85,85,0.12);
+  --yellow: #d4a843;
+  --yellow-subtle: rgba(212,168,67,0.12);
+  --blue: #5b8ec9;
+  --blue-subtle: rgba(91,142,201,0.12);
+
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* ═══════════════════════════════════════════
+   THEME: LIGHT
+   ═══════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg-0: #ffffff;
+  --bg-1: #f7f7f7;
+  --bg-2: #efefef;
+  --bg-3: #e4e4e4;
+  --bg-input: #ffffff;
+  --bg-code: #f5f5f5;
+  --bg-hover: rgba(0,0,0,0.03);
+  --bg-active: rgba(0,0,0,0.06);
+
+  --border-0: rgba(0,0,0,0.07);
+  --border-1: rgba(0,0,0,0.11);
+  --border-2: rgba(0,0,0,0.17);
+
+  --fg-0: #1a1a1a;
+  --fg-1: #444444;
+  --fg-2: #777777;
+  --fg-3: #aaaaaa;
+
+  --accent: #c56a15;
+  --accent-subtle: rgba(197,106,21,0.08);
+  --green: #3d8a5f;
+  --green-subtle: rgba(61,138,95,0.08);
+  --red: #c44040;
+  --red-subtle: rgba(196,64,64,0.08);
+  --yellow: #9e7b20;
+  --yellow-subtle: rgba(158,123,32,0.08);
+  --blue: #3b6fa0;
+  --blue-subtle: rgba(59,111,160,0.08);
+
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ═══════════════════════════════════════════
+   RESET
+   ═══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--fg-0);
+  background: var(--bg-0);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent-subtle); color: var(--accent); }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-2); }
+
+/* ═══════════════════════════════════════════
+   TITLEBAR
+   ═══════════════════════════════════════════ */
+.titlebar {
+  height: 36px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border-0);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.titlebar-traffic {
+  display: flex;
+  gap: 7px;
+  -webkit-app-region: no-drag;
+}
+
+.traffic-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 0.5px solid rgba(0,0,0,0.12);
+}
+.traffic-close { background: #ff5f57; }
+.traffic-min { background: #febc2e; }
+.traffic-max { background: #28c840; }
+
+.titlebar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--fg-2);
+  font-weight: 400;
+}
+
+/* ═══════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════ */
+.app {
+  display: flex;
+  height: calc(100vh - 36px);
+}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR
+   ═══════════════════════════════════════════ */
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: var(--bg-1);
+  border-right: 1px solid var(--border-0);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-top {
+  padding: 14px 14px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-brand {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--fg-0);
+  letter-spacing: -0.01em;
+}
+
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-0);
+  background: transparent;
+  color: var(--fg-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: background 0.1s, border-color 0.1s;
+}
+.btn-icon:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-1);
+  color: var(--fg-1);
+}
+
+.sidebar-search {
+  padding: 0 14px 10px;
+}
+
+.search-box {
+  width: 100%;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border-0);
+  background: var(--bg-input);
+  color: var(--fg-0);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 0 10px;
+  outline: none;
+  transition: border-color 0.12s;
+}
+.search-box::placeholder { color: var(--fg-3); }
+.search-box:focus { border-color: var(--accent); }
+
+.session-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px;
+}
+
+.session-group {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg-3);
+  padding: 12px 6px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.session-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s;
+  margin-bottom: 1px;
+  position: relative;
+}
+.session-item:hover { background: var(--bg-hover); }
+.session-item.active { background: var(--bg-active); }
+.session-item.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 0 1px 1px 0;
+}
+
+.session-title {
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--fg-0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-meta {
+  font-size: 11px;
+  color: var(--fg-3);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.session-running {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: blink 2.5s ease-in-out infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.sidebar-footer {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-0);
+  display: flex;
+  gap: 8px;
+}
+
+.sidebar-btn {
+  flex: 1;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--border-0);
+  background: transparent;
+  color: var(--fg-2);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.sidebar-btn:hover {
+  background: var(--bg-hover);
+  color: var(--fg-1);
+}
+
+/* ═══════════════════════════════════════════
+   MAIN
+   ═══════════════════════════════════════════ */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  position: relative;
+}
+
+/* ═══════════════════════════════════════════
+   TOPBAR
+   ═══════════════════════════════════════════ */
+.topbar {
+  height: 44px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-0);
+  flex-shrink: 0;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.model-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-0);
+}
+.model-pill:hover { background: var(--bg-hover); }
+
+.model-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.model-chevron {
+  font-size: 9px;
+  color: var(--fg-3);
+  margin-left: 2px;
+}
+
+.cwd-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--fg-3);
+  padding: 3px 8px;
+  background: var(--bg-2);
+  border-radius: 4px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.topbar-btn {
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-0);
+  background: transparent;
+  color: var(--fg-2);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.topbar-btn:hover {
+  background: var(--bg-hover);
+  color: var(--fg-1);
+  border-color: var(--border-1);
+}
+.topbar-btn.active {
+  background: var(--accent-subtle);
+  color: var(--accent);
+  border-color: transparent;
+}
+
+.theme-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--fg-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: background 0.1s;
+}
+.theme-toggle:hover { background: var(--bg-hover); color: var(--fg-1); }
+
+/* ═══════════════════════════════════════════
+   MESSAGES
+   ═══════════════════════════════════════════ */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 0;
+}
+
+.messages-inner {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.msg {
+  margin-bottom: 28px;
+  animation: fadeUp 0.2s ease-out;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.msg-role {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-1);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.msg-time {
+  font-size: 11px;
+  color: var(--fg-3);
+  margin-left: auto;
+}
+
+.msg-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--fg-0);
+}
+
+.msg-body p { margin-bottom: 10px; }
+.msg-body p:last-child { margin-bottom: 0; }
+
+.msg-body code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12.5px;
+  background: var(--bg-2);
+  padding: 2px 5px;
+  border-radius: 3px;
+  color: var(--accent);
+}
+
+.msg-body ul, .msg-body ol {
+  padding-left: 20px;
+  margin-bottom: 10px;
+  color: var(--fg-1);
+}
+.msg-body li { margin-bottom: 4px; }
+
+/* ═══════════════════════════════════════════
+   CODE BLOCK
+   ═══════════════════════════════════════════ */
+.codeblock {
+  background: var(--bg-code);
+  border: 1px solid var(--border-0);
+  border-radius: 8px;
+  margin: 12px 0;
+  overflow: hidden;
+}
+
+.codeblock-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border-0);
+}
+
+.codeblock-lang {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.codeblock-copy {
+  font-size: 11px;
+  color: var(--fg-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.codeblock-copy:hover { color: var(--fg-1); }
+
+.codeblock pre {
+  padding: 12px 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--fg-1);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.codeblock .kw { color: var(--blue); }
+.codeblock .fn { color: var(--accent); }
+.codeblock .str { color: var(--green); }
+.codeblock .cmt { color: var(--fg-3); font-style: italic; }
+.codeblock .num { color: var(--yellow); }
+
+/* ═══════════════════════════════════════════
+   TOOL CARD
+   ═══════════════════════════════════════════ */
+.tool {
+  border: 1px solid var(--border-0);
+  border-radius: 8px;
+  margin: 10px 0;
+  overflow: hidden;
+  background: var(--bg-1);
+}
+
+.tool-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+.tool-header:hover { background: var(--bg-hover); }
+
+.tool-type {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.tool-type.bash { background: var(--yellow-subtle); color: var(--yellow); }
+.tool-type.edit { background: var(--blue-subtle); color: var(--blue); }
+.tool-type.read { background: var(--green-subtle); color: var(--green); }
+.tool-type.grep { background: var(--accent-subtle); color: var(--accent); }
+
+.tool-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--fg-1);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tool-status {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--green);
+}
+.tool-status.running { color: var(--yellow); }
+
+.tool-toggle {
+  font-size: 10px;
+  color: var(--fg-3);
+  transition: transform 0.15s;
+}
+.tool.open .tool-toggle { transform: rotate(90deg); }
+
+.tool-body {
+  display: none;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-0);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg-2);
+  max-height: 180px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.tool.open .tool-body { display: block; }
+
+.diff-add { color: var(--green); }
+.diff-del { color: var(--red); }
+.diff-info { color: var(--fg-3); }
+
+/* ═══════════════════════════════════════════
+   THINKING
+   ═══════════════════════════════════════════ */
+.thinking {
+  border: 1px solid var(--border-0);
+  border-radius: 8px;
+  margin: 10px 0;
+  overflow: hidden;
+}
+
+.thinking-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--fg-3);
+  transition: background 0.1s;
+}
+.thinking-bar:hover { background: var(--bg-hover); }
+
+.thinking-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fg-3);
+  animation: blink 1.5s infinite;
+}
+
+.thinking-content {
+  display: none;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-0);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg-2);
+  font-style: italic;
+}
+.thinking.open .thinking-content { display: block; }
+
+/* ═══════════════════════════════════════════
+   AGENT INLINE
+   ═══════════════════════════════════════════ */
+.agent-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin: 8px 0;
+  background: var(--bg-1);
+  border-radius: 6px;
+  border-left: 2px solid var(--accent);
+}
+
+.agent-spinner {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--border-1);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.agent-text {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.agent-text strong { color: var(--fg-0); font-weight: 500; }
+
+/* ═══════════════════════════════════════════
+   INPUT
+   ═══════════════════════════════════════════ */
+.input-area {
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--border-0);
+  flex-shrink: 0;
+}
+
+.input-wrap {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.input-box {
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.input-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
+}
+
+.input-field {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--fg-0);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  min-height: 20px;
+  max-height: 180px;
+}
+.input-field::placeholder { color: var(--fg-3); }
+
+.btn-send {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: opacity 0.1s;
+  flex-shrink: 0;
+}
+.btn-send:hover { opacity: 0.85; }
+.btn-send:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.input-hints {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.input-hints kbd {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  padding: 1px 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  border-radius: 3px;
+  color: var(--fg-2);
+}
+
+/* ═══════════════════════════════════════════
+   STATUS BAR
+   ═══════════════════════════════════════════ */
+.statusbar {
+  height: 26px;
+  background: var(--bg-1);
+  border-top: 1px solid var(--border-0);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--fg-3);
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.status-sep {
+  width: 1px;
+  height: 12px;
+  background: var(--border-0);
+}
+
+.ctx-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ctx-track {
+  width: 60px;
+  height: 3px;
+  background: var(--bg-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ctx-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s, background 0.3s;
+}
+.ctx-fill.low { background: var(--green); }
+.ctx-fill.mid { background: var(--yellow); }
+.ctx-fill.high { background: var(--red); }
+
+.status-cost { color: var(--yellow); }
+.status-end { margin-left: auto; }
+
+/* ═══════════════════════════════════════════
+   MODEL DROPDOWN
+   ═══════════════════════════════════════════ */
+.dropdown-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.dropdown-overlay.show { display: block; }
+
+.model-dropdown {
+  position: absolute;
+  top: 80px;
+  left: 284px;
+  width: 300px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  z-index: 50;
+  overflow: hidden;
+  animation: slideDown 0.12s ease-out;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dd-group { padding: 6px 0; }
+.dd-group + .dd-group { border-top: 1px solid var(--border-0); }
+
+.dd-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--fg-3);
+  padding: 2px 12px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dd-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.08s;
+  gap: 8px;
+}
+.dd-item:hover { background: var(--bg-hover); }
+.dd-item.current { background: var(--accent-subtle); }
+
+.dd-item-name {
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--fg-0);
+  flex: 1;
+}
+
+.dd-item-ctx {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--fg-3);
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════ */
+@media (max-width: 860px) {
+  .sidebar { display: none; }
+  .model-dropdown { left: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TITLEBAR -->
+<div class="titlebar">
+  <div class="titlebar-traffic">
+    <div class="traffic-dot traffic-close"></div>
+    <div class="traffic-dot traffic-min"></div>
+    <div class="traffic-dot traffic-max"></div>
+  </div>
+  <span class="titlebar-center">ClaudeMe</span>
+</div>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-top">
+      <span class="sidebar-brand">ClaudeMe</span>
+      <button class="btn-icon" id="btnNewChat" title="">+</button>
+    </div>
+
+    <div class="sidebar-search">
+      <input class="search-box" id="searchBox" type="text">
+    </div>
+
+    <div class="session-list" id="sessionList">
+      <div class="session-group" data-i18n="today"></div>
+
+      <div class="session-item active">
+        <div class="session-title" data-i18n="session_1"></div>
+        <div class="session-meta">
+          <span>Opus</span>
+          <span>14:32</span>
+          <span class="session-running"></span>
+        </div>
+      </div>
+
+      <div class="session-item">
+        <div class="session-title" data-i18n="session_2"></div>
+        <div class="session-meta"><span>Sonnet</span><span>11:08</span></div>
+      </div>
+
+      <div class="session-item">
+        <div class="session-title" data-i18n="session_3"></div>
+        <div class="session-meta"><span>Haiku</span><span>09:15</span></div>
+      </div>
+
+      <div class="session-group" data-i18n="yesterday"></div>
+
+      <div class="session-item">
+        <div class="session-title" data-i18n="session_4"></div>
+        <div class="session-meta"><span>Opus</span><span>22:47</span></div>
+      </div>
+
+      <div class="session-item">
+        <div class="session-title" data-i18n="session_5"></div>
+        <div class="session-meta"><span>Opus</span><span>16:20</span></div>
+      </div>
+
+      <div class="session-item">
+        <div class="session-title" data-i18n="session_6"></div>
+        <div class="session-meta"><span>Sonnet</span><span>14:33</span></div>
+      </div>
+
+      <div class="session-group" data-i18n="this_week"></div>
+
+      <div class="session-item">
+        <div class="session-title" data-i18n="session_7"></div>
+        <div class="session-meta"><span>Opus</span><span>6/17</span></div>
+      </div>
+
+      <div class="session-item">
+        <div class="session-title" data-i18n="session_8"></div>
+        <div class="session-meta"><span>Sonnet</span><span>6/16</span></div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="sidebar-btn" data-i18n="settings"></button>
+      <button class="sidebar-btn" data-i18n="wiki"></button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="model-pill" id="modelPill">
+          <span class="model-indicator"></span>
+          <span>Claude 4.6 Opus</span>
+          <span class="model-chevron">&#9662;</span>
+        </div>
+        <span class="cwd-label">~/AlienLab/zhai/claudeme</span>
+      </div>
+      <div class="topbar-right">
+        <button class="topbar-btn" id="langBtn">
+          <span id="langLabel">ZH</span>
+        </button>
+        <button class="theme-toggle" id="themeBtn">
+          <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="messages" id="messagesScroll">
+      <div class="messages-inner">
+
+        <!-- User message -->
+        <div class="msg">
+          <div class="msg-header">
+            <span class="msg-role" data-i18n="you"></span>
+            <span class="msg-time">14:32</span>
+          </div>
+          <div class="msg-body">
+            <p data-i18n="user_msg_1"></p>
+          </div>
+        </div>
+
+        <!-- Assistant message -->
+        <div class="msg">
+          <div class="msg-header">
+            <span class="msg-role">ClaudeMe</span>
+            <span class="msg-time">14:32</span>
+          </div>
+          <div class="msg-body">
+
+            <!-- Thinking -->
+            <div class="thinking open">
+              <div class="thinking-bar" onclick="this.parentElement.classList.toggle('open')">
+                <span class="thinking-dot"></span>
+                <span data-i18n="thinking_label"></span>
+              </div>
+              <div class="thinking-content" data-i18n="thinking_content"></div>
+            </div>
+
+            <p data-i18n="assistant_intro"></p>
+
+            <!-- Tool: Read -->
+            <div class="tool open">
+              <div class="tool-header" onclick="this.parentElement.classList.toggle('open')">
+                <span class="tool-type read">Read</span>
+                <span class="tool-name">src/components/ClaudeMeStatusBar.tsx</span>
+                <span class="tool-status" data-i18n="done"></span>
+                <span class="tool-toggle">&#9656;</span>
+              </div>
+              <div class="tool-body" data-i18n="tool_read_body"></div>
+            </div>
+
+            <p data-i18n="assistant_plan"></p>
+            <ul>
+              <li><code>useStatusBarData()</code> <span data-i18n="hook_desc"></span></li>
+              <li><code>ClaudeMeStatusBar</code> <span data-i18n="component_desc"></span></li>
+            </ul>
+
+            <!-- Tool: Write -->
+            <div class="tool open">
+              <div class="tool-header" onclick="this.parentElement.classList.toggle('open')">
+                <span class="tool-type edit">Write</span>
+                <span class="tool-name">src/hooks/useStatusBarData.ts</span>
+                <span class="tool-status" data-i18n="done"></span>
+                <span class="tool-toggle">&#9656;</span>
+              </div>
+              <div class="tool-body"><span class="diff-add" data-i18n="tool_write_new"></span>
+<span class="diff-info" data-i18n="tool_write_exports"></span></div>
+            </div>
+
+            <div class="tool open">
+              <div class="tool-header" onclick="this.parentElement.classList.toggle('open')">
+                <span class="tool-type edit">Edit</span>
+                <span class="tool-name">src/components/ClaudeMeStatusBar.tsx</span>
+                <span class="tool-status" data-i18n="done"></span>
+                <span class="tool-toggle">&#9656;</span>
+              </div>
+              <div class="tool-body"><span class="diff-del" data-i18n="tool_edit_del"></span>
+<span class="diff-add" data-i18n="tool_edit_add"></span>
+<span class="diff-info" data-i18n="tool_edit_net"></span></div>
+            </div>
+
+            <!-- Tool: Bash (collapsed) -->
+            <div class="tool">
+              <div class="tool-header" onclick="this.parentElement.classList.toggle('open')">
+                <span class="tool-type bash">Bash</span>
+                <span class="tool-name">bun run dev</span>
+                <span class="tool-status">exit 0</span>
+                <span class="tool-toggle">&#9656;</span>
+              </div>
+              <div class="tool-body">$ bun run dev
+Compiled successfully in 340ms.</div>
+            </div>
+
+            <p data-i18n="assistant_summary"></p>
+            <ul>
+              <li data-i18n="summary_1"></li>
+              <li data-i18n="summary_2"></li>
+              <li data-i18n="summary_3"></li>
+            </ul>
+
+            <!-- Code block -->
+            <div class="codeblock">
+              <div class="codeblock-bar">
+                <span class="codeblock-lang">typescript</span>
+                <button class="codeblock-copy" data-i18n="copy"></button>
+              </div>
+              <pre><span class="cmt">// useStatusBarData.ts</span>
+<span class="kw">export function</span> <span class="fn">useStatusBarData</span>() {
+  <span class="kw">const</span> stats = <span class="fn">useStats</span>()
+  <span class="kw">const</span> model = <span class="fn">useCurrentModel</span>()
+
+  <span class="kw">const</span> contextPercent = <span class="fn">useMemo</span>(() =&gt; {
+    <span class="kw">const</span> used = stats.inputTokens + stats.outputTokens
+    <span class="kw">return</span> Math.<span class="fn">round</span>((used / model.contextWindow) * <span class="num">100</span>)
+  }, [stats, model])
+
+  <span class="kw">const</span> progressColor = <span class="fn">getProgressColor</span>(contextPercent)
+  <span class="kw">const</span> cost = <span class="fn">formatCost</span>(stats.totalCost)
+
+  <span class="kw">return</span> { model, stats, contextPercent, progressColor, cost }
+}</pre>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Agent running -->
+        <div class="msg">
+          <div class="msg-body">
+            <div class="agent-line">
+              <div class="agent-spinner"></div>
+              <span class="agent-text"><strong>code-reviewer</strong> <span data-i18n="agent_reviewing"></span></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- INPUT -->
+    <div class="input-area">
+      <div class="input-wrap">
+        <div class="input-box">
+          <textarea class="input-field" id="inputField" rows="1"></textarea>
+          <button class="btn-send" id="sendBtn">&#8593;</button>
+        </div>
+        <div class="input-hints" id="inputHints"></div>
+      </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="statusbar">
+      <span class="status-dot"></span>
+      <span data-i18n="connected"></span>
+      <span class="status-sep"></span>
+      <span>opus</span>
+      <span class="status-sep"></span>
+      <div class="ctx-bar">
+        <span data-i18n="context_short"></span>
+        <div class="ctx-track">
+          <div class="ctx-fill mid" style="width:42%"></div>
+        </div>
+        <span>42%</span>
+      </div>
+      <span class="status-sep"></span>
+      <span data-i18n="tokens_in"></span>
+      <span data-i18n="tokens_out"></span>
+      <span class="status-sep"></span>
+      <span class="status-cost">$2.34</span>
+      <span class="status-end">v1.0.3</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- DROPDOWN OVERLAY -->
+<div class="dropdown-overlay" id="ddOverlay">
+  <div class="model-dropdown" id="modelDropdown">
+    <div class="dd-group">
+      <div class="dd-group-label" data-i18n="provider_zyuncs"></div>
+      <div class="dd-item current">
+        <span class="dd-item-name">Claude 4.6 Opus</span>
+        <span class="dd-item-ctx">800k</span>
+      </div>
+      <div class="dd-item">
+        <span class="dd-item-name">Claude 4.6 Sonnet</span>
+        <span class="dd-item-ctx">800k</span>
+      </div>
+      <div class="dd-item">
+        <span class="dd-item-name">Claude Haiku 4.5</span>
+        <span class="dd-item-ctx">800k</span>
+      </div>
+    </div>
+    <div class="dd-group">
+      <div class="dd-group-label" data-i18n="provider_toutou"></div>
+      <div class="dd-item">
+        <span class="dd-item-name">Kimi K2.7 Code</span>
+        <span class="dd-item-ctx">800k</span>
+      </div>
+      <div class="dd-item">
+        <span class="dd-item-name">GLM 5.2</span>
+        <span class="dd-item-ctx">800k</span>
+      </div>
+      <div class="dd-item">
+        <span class="dd-item-name">Qwen3 Coder</span>
+        <span class="dd-item-ctx">800k</span>
+      </div>
+      <div class="dd-item">
+        <span class="dd-item-name">DeepSeek R1</span>
+        <span class="dd-item-ctx">800k</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// i18n SYSTEM
+// ═══════════════════════════════════════════
+const i18n = {
+  zh: {
+    today: '今天',
+    yesterday: '昨天',
+    this_week: '本周',
+    settings: '设置',
+    wiki: '知识库',
+    you: '你',
+    connected: '已连接',
+    context_short: '上下文',
+    tokens_in: '输入 12.4k',
+    tokens_out: '输出 3.8k',
+    copy: '复制',
+    done: '完成',
+    search_placeholder: '搜索会话...',
+    input_placeholder: '给 ClaudeMe 发消息...',
+    input_hints_text: '<kbd>Enter</kbd> 发送 · <kbd>Shift+Enter</kbd> 换行 · <kbd>Cmd+K</kbd> 新对话',
+    new_chat_title: '新建对话',
+
+    session_1: '重构 StatusBar 组件',
+    session_2: '修复 context_window 800k 溢出',
+    session_3: 'Wiki 扫描性能优化',
+    session_4: '实现 /distill 蒸馏命令',
+    session_5: '桌面 App 架构设计',
+    session_6: 'MCP Server 配置调试',
+    session_7: 'TUI 状态栏 v1.0.3',
+    session_8: 'Wiki 双向链接',
+
+    user_msg_1: '重构 <code>ClaudeMeStatusBar</code> 组件，把数据逻辑抽到自定义 hook 里，组件只负责渲染。',
+    thinking_label: '推理 — 3.2s, 1247 tokens',
+    thinking_content: '用户想把 ClaudeMeStatusBar 的数据逻辑和渲染分离。组件目前有 token 计算、费用格式化、上下文百分比、进度条颜色映射全写在一起。我来抽一个 useStatusBarData() hook 返回计算好的值，组件变成纯展示。',
+    assistant_intro: '先看当前组件结构，然后拆分成 hook 和纯渲染组件。',
+    tool_read_body: '186 行。组件混合了 token 计算、费用格式化、上下文百分比计算、进度条颜色映射和 JSX 渲染。',
+    assistant_plan: '当前 186 行，职责耦合。拆分为：',
+    hook_desc: '— 纯数据 hook (67 行)',
+    component_desc: '— 纯渲染 (94 行)',
+    tool_write_new: '+67 行 — 新建文件',
+    tool_write_exports: '导出 useStatusBarData() hook',
+    tool_edit_del: '-186 行 (移除数据逻辑)',
+    tool_edit_add: '+94 行 (纯渲染 + hook 引入)',
+    tool_edit_net: '净减少 92 行',
+    assistant_summary: '完成。变更摘要：',
+    summary_1: '新建 <code>src/hooks/useStatusBarData.ts</code> (67 行) — 全部数据逻辑',
+    summary_2: '精简 <code>ClaudeMeStatusBar.tsx</code> 从 186 行到 94 行 — 纯渲染',
+    summary_3: '编译通过，行为不变',
+    agent_reviewing: '正在审查变更...',
+    provider_zyuncs: '智汇云',
+    provider_toutou: '兔头妈妈',
+  },
+  en: {
+    today: 'Today',
+    yesterday: 'Yesterday',
+    this_week: 'This week',
+    settings: 'Settings',
+    wiki: 'Wiki',
+    you: 'You',
+    connected: 'connected',
+    context_short: 'ctx',
+    tokens_in: 'in 12.4k',
+    tokens_out: 'out 3.8k',
+    copy: 'Copy',
+    done: 'done',
+    search_placeholder: 'Search sessions...',
+    input_placeholder: 'Message ClaudeMe...',
+    input_hints_text: '<kbd>Enter</kbd> send · <kbd>Shift+Enter</kbd> newline · <kbd>Cmd+K</kbd> new chat',
+    new_chat_title: 'New chat',
+
+    session_1: 'Refactor StatusBar component',
+    session_2: 'Fix context_window 800k overflow',
+    session_3: 'Wiki scan performance',
+    session_4: 'Implement /distill command',
+    session_5: 'Desktop App architecture',
+    session_6: 'MCP Server config debug',
+    session_7: 'TUI StatusBar v1.0.3',
+    session_8: 'Wiki bidirectional links',
+
+    user_msg_1: 'Refactor <code>ClaudeMeStatusBar</code> — extract data logic into a custom hook, component should only render.',
+    thinking_label: 'Thinking — 3.2s, 1247 tokens',
+    thinking_content: 'The user wants to separate data logic from rendering in ClaudeMeStatusBar. The component currently has token calculation, cost formatting, context percentage, and progress bar color mapping all inlined. I\'ll extract a useStatusBarData() hook that returns computed values, keeping the component purely presentational.',
+    assistant_intro: 'I\'ll read the current component first, then split it into a hook and a pure renderer.',
+    tool_read_body: '186 lines. Component mixes token calculation, cost formatting, context percentage computation, progress bar color mapping, and JSX rendering.',
+    assistant_plan: 'Current state: 186 lines with tangled concerns. Splitting into:',
+    hook_desc: '— pure data hook (67 lines)',
+    component_desc: '— pure render (94 lines)',
+    tool_write_new: '+67 lines — new file',
+    tool_write_exports: 'exports useStatusBarData() hook',
+    tool_edit_del: '-186 lines (removed data logic)',
+    tool_edit_add: '+94 lines (pure render + hook import)',
+    tool_edit_net: 'net reduction: 92 lines',
+    assistant_summary: 'Done. Summary of changes:',
+    summary_1: 'Created <code>src/hooks/useStatusBarData.ts</code> (67 lines) — all data logic',
+    summary_2: 'Simplified <code>ClaudeMeStatusBar.tsx</code> from 186 to 94 lines — render only',
+    summary_3: 'Build passes, behavior unchanged',
+    agent_reviewing: 'reviewing changes...',
+    provider_zyuncs: 'ZyunCS',
+    provider_toutou: 'Toutou',
+  }
+};
+
+let currentLang = 'zh';
+
+function applyLang(lang) {
+  currentLang = lang;
+  document.documentElement.setAttribute('data-lang', lang);
+  document.documentElement.setAttribute('lang', lang === 'zh' ? 'zh-CN' : 'en');
+
+  // Update all data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (i18n[lang][key] !== undefined) {
+      el.innerHTML = i18n[lang][key];
+    }
+  });
+
+  // Update placeholders and titles
+  document.getElementById('searchBox').placeholder = i18n[lang].search_placeholder;
+  document.getElementById('inputField').placeholder = i18n[lang].input_placeholder;
+  document.getElementById('inputHints').innerHTML = i18n[lang].input_hints_text;
+  document.getElementById('btnNewChat').title = i18n[lang].new_chat_title;
+  document.getElementById('langLabel').textContent = lang === 'zh' ? 'ZH' : 'EN';
+}
+
+// ═══════════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════════
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+});
+
+// ═══════════════════════════════════════════
+// LANGUAGE TOGGLE
+// ═══════════════════════════════════════════
+const langBtn = document.getElementById('langBtn');
+langBtn.addEventListener('click', () => {
+  const next = currentLang === 'zh' ? 'en' : 'zh';
+  applyLang(next);
+});
+
+// ═══════════════════════════════════════════
+// TEXTAREA AUTO-RESIZE
+// ═══════════════════════════════════════════
+const field = document.getElementById('inputField');
+field.addEventListener('input', () => {
+  field.style.height = 'auto';
+  field.style.height = Math.min(field.scrollHeight, 180) + 'px';
+});
+
+// ═══════════════════════════════════════════
+// MODEL DROPDOWN
+// ═══════════════════════════════════════════
+const modelPill = document.getElementById('modelPill');
+const ddOverlay = document.getElementById('ddOverlay');
+
+modelPill.addEventListener('click', () => {
+  ddOverlay.classList.toggle('show');
+});
+
+ddOverlay.addEventListener('click', (e) => {
+  if (e.target === ddOverlay) {
+    ddOverlay.classList.remove('show');
+  }
+});
+
+document.querySelectorAll('.dd-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.dd-item').forEach(i => i.classList.remove('current'));
+    item.classList.add('current');
+    const name = item.querySelector('.dd-item-name').textContent;
+    modelPill.querySelector('span:nth-child(2)').textContent = name;
+    ddOverlay.classList.remove('show');
+  });
+});
+
+// ═══════════════════════════════════════════
+// SCROLL TO BOTTOM
+// ═══════════════════════════════════════════
+const msgsScroll = document.getElementById('messagesScroll');
+msgsScroll.scrollTop = msgsScroll.scrollHeight;
+
+// ═══════════════════════════════════════════
+// INIT — default Chinese
+// ═══════════════════════════════════════════
+applyLang('zh');
+</script>
+
+</body>
+</html>

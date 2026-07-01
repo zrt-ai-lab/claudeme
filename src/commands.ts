@@ -25,8 +25,6 @@ import ide from './commands/ide/index.js'
 import init from './commands/init.js'
 import initVerifiers from './commands/init-verifiers.js'
 import keybindings from './commands/keybindings/index.js'
-import login from './commands/login/index.js'
-import logout from './commands/logout/index.js'
 import wiki from './commands/wiki/index.js'
 import installGitHubApp from './commands/install-github-app/index.js'
 import installSlackApp from './commands/install-slack-app/index.js'
@@ -201,7 +199,6 @@ const usageReport: Command = {
     return real.getPromptForCommand(args, context)
   },
 }
-import oauthRefresh from './commands/oauth-refresh/index.js'
 import debugToolCall from './commands/debug-tool-call/index.js'
 import { getSettingSourceName } from './utils/settings/constants.js'
 import {
@@ -248,7 +245,6 @@ export const INTERNAL_ONLY_COMMANDS = [
   antTrace,
   perfIssue,
   env,
-  oauthRefresh,
   debugToolCall,
   agentsPlatform,
   autofixPr,
@@ -336,7 +332,6 @@ const COMMANDS = memoize((): Command[] => [
   hooks,
   exportCommand,
   sandboxToggle,
-  ...(!isUsing3PServices() ? [logout, login()] : []),
   passes,
   ...(peersCmd ? [peersCmd] : []),
   tasks,
