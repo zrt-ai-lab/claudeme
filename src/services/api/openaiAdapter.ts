@@ -64,6 +64,12 @@ interface OpenAIChatCompletionResponse {
     readonly prompt_tokens: number
     readonly completion_tokens: number
     readonly total_tokens: number
+    readonly prompt_tokens_details?: {
+      readonly cached_tokens?: number
+    }
+    readonly completion_tokens_details?: {
+      readonly reasoning_tokens?: number
+    }
   }
 }
 
@@ -444,7 +450,7 @@ function translateNonStreamingResponse(
       input_tokens: response.usage?.prompt_tokens || 0,
       output_tokens: response.usage?.completion_tokens || 0,
       cache_creation_input_tokens: 0,
-      cache_read_input_tokens: 0,
+      cache_read_input_tokens: response.usage?.prompt_tokens_details?.cached_tokens || 0,
     },
   }
 }

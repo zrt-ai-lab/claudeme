@@ -33,6 +33,12 @@ export interface OpenAIChatCompletionChunk {
     readonly prompt_tokens: number
     readonly completion_tokens: number
     readonly total_tokens: number
+    readonly prompt_tokens_details?: {
+      readonly cached_tokens?: number
+    }
+    readonly completion_tokens_details?: {
+      readonly reasoning_tokens?: number
+    }
   }
 }
 
@@ -43,6 +49,7 @@ interface StreamState {
   model: string
   inputTokens: number
   outputTokens: number
+  cacheReadInputTokens: number
   // 当前正在构建的 content block 索引
   nextBlockIndex: number
   // 是否已发送 message_start
@@ -217,6 +224,7 @@ export function translateChunk(
       if (usage) {
         state.inputTokens = usage.prompt_tokens
         state.outputTokens = usage.completion_tokens
+        state.cacheReadInputTokens = usage.prompt_tokens_details?.cached_tokens || 0
       }
 
       events.push({
@@ -226,7 +234,7 @@ export function translateChunk(
           input_tokens: state.inputTokens,
           output_tokens: state.outputTokens,
           cache_creation_input_tokens: 0,
-          cache_read_input_tokens: 0,
+          cache_read_input_tokens: state.cacheReadInputTokens,
         },
       })
       events.push({ type: 'message_stop' })
@@ -238,6 +246,7 @@ export function translateChunk(
   if (chunk.usage && chunk.choices.length === 0) {
     state.inputTokens = chunk.usage.prompt_tokens || state.inputTokens
     state.outputTokens = chunk.usage.completion_tokens || state.outputTokens
+    state.cacheReadInputTokens = chunk.usage.prompt_tokens_details?.cached_tokens || state.cacheReadInputTokens
     // 如果 message_stop 已经发送但收到了新的 usage 数据，补发 message_delta 更新 usage
     if (state.messageStopped && (chunk.usage.prompt_tokens > 0 || chunk.usage.completion_tokens > 0)) {
       events.push({
@@ -247,7 +256,7 @@ export function translateChunk(
           input_tokens: state.inputTokens,
           output_tokens: state.outputTokens,
           cache_creation_input_tokens: 0,
-          cache_read_input_tokens: 0,
+          cache_read_input_tokens: state.cacheReadInputTokens,
         },
       })
     }
@@ -265,6 +274,7 @@ export function createStreamState(): StreamState {
     model: '',
     inputTokens: 0,
     outputTokens: 0,
+    cacheReadInputTokens: 0,
     nextBlockIndex: 0,
     messageStarted: false,
     messageStopped: false,

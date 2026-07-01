@@ -17,6 +17,8 @@ import {
   getTotalInputTokens,
   getTotalOutputTokens,
   getTotalCost,
+  getTotalCacheReadInputTokens,
+  getTotalCacheCreationInputTokens,
 } from '../cost-tracker.js'
 import * as claudemeConfig from '../utils/claudemeConfig.js'
 import { SpiritAvatar } from './spirit/index.js'
@@ -109,6 +111,12 @@ function ClaudeMeStatusBarInner({ messages, spiritStatus }: Props): React.ReactN
   const totalOutput = getTotalOutputTokens()
   const totalCost = getTotalCost()
   const totalTokens = totalInput + totalOutput
+  const cacheRead = getTotalCacheReadInputTokens()
+  const cacheCreation = getTotalCacheCreationInputTokens()
+  const totalPromptTokens = totalInput + cacheRead + cacheCreation
+  const cacheRate = totalPromptTokens > 0
+    ? Math.round((cacheRead / totalPromptTokens) * 100)
+    : 0
 
   // 当前上下文 token 数
   const lastValidSnapshot = useRef<number>(0)
@@ -154,11 +162,18 @@ function ClaudeMeStatusBarInner({ messages, spiritStatus }: Props): React.ReactN
         <Text dimColor>{emptyBar}</Text>
         <Text color={barColor} bold>{` ${percent}%`}</Text>
         <Text dimColor>{` ${formatTokenCount(currentTokens)}/${formatTokenCount(contextWindow)}`}</Text>
-        <Text dimColor>{'  in '}</Text>
+        <Text dimColor>{'  ↑'}</Text>
         <Text color="ansi:green">{formatTokenCount(totalInput)}</Text>
-        <Text dimColor>{' out '}</Text>
+        <Text dimColor>{' ↓'}</Text>
         <Text color="ansi:blue">{formatTokenCount(totalOutput)}</Text>
-        <Text dimColor>{` total ${formatTokenCount(totalTokens)}  `}</Text>
+        <Text dimColor>{` 合计${formatTokenCount(totalTokens)}  `}</Text>
+        <Text dimColor>{'读缓'}</Text>
+        <Text color="ansi:cyan">{formatTokenCount(cacheRead)}</Text>
+        <Text dimColor>{' 写缓'}</Text>
+        <Text color="ansi:magenta">{formatTokenCount(cacheCreation)}</Text>
+        <Text dimColor>{' 命中'}</Text>
+        <Text color="ansi:cyan">{`${cacheRate}%`}</Text>
+        <Text dimColor>{'  '}</Text>
         <Text color={costColor}>{formatCost(totalCost)}</Text>
       </Box>
       {/* 右侧：精灵头像 */}
